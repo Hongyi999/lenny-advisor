@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+@theme {
+  --color-warm-50: oklch(0.98 0.01 70);
+  --color-warm-100: oklch(0.95 0.02 70);
+  --color-warm-200: oklch(0.90 0.03 70);
+  --color-warm-300: oklch(0.82 0.05 65);
+  --color-warm-400: oklch(0.72 0.08 55);
+  --color-warm-500: oklch(0.62 0.12 50);
+  --color-warm-600: oklch(0.52 0.14 45);
+  --color-warm-700: oklch(0.42 0.12 45);
+  --color-warm-800: oklch(0.35 0.08 45);
+  --color-warm-900: oklch(0.25 0.05 45);
+
+  --color-sage-50: oklch(0.97 0.01 150);
+  --color-sage-100: oklch(0.94 0.02 150);
+  --color-sage-200: oklch(0.88 0.03 150);
+  --color-sage-300: oklch(0.78 0.04 150);
+  --color-sage-400: oklch(0.65 0.06 150);
+  --color-sage-500: oklch(0.52 0.06 150);
+
+  --color-sand-50: oklch(0.98 0.008 80);
+  --color-sand-100: oklch(0.96 0.012 80);
+  --color-sand-200: oklch(0.93 0.018 80);
+  --color-sand-300: oklch(0.88 0.025 75);
+  --color-sand-400: oklch(0.78 0.035 70);
+  --color-sand-500: oklch(0.65 0.04 65);
+  --color-sand-600: oklch(0.50 0.04 60);
+  --color-sand-700: oklch(0.40 0.03 55);
+  --color-sand-800: oklch(0.30 0.02 50);
+  --color-sand-900: oklch(0.20 0.015 45);
+
+  --color-accent: oklch(0.65 0.14 45);
+  --color-accent-hover: oklch(0.58 0.15 42);
+  --color-accent-light: oklch(0.92 0.04 50);
+
+  --font-sans: "Source Sans 3", "Source Sans Pro", system-ui, -apple-system, sans-serif;
+  --font-serif: "Source Serif 4", "Source Serif Pro", Georgia, "Times New Roman", serif;
+  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: var(--color-sand-900);
+  background-color: var(--color-sand-50);
+}
+
+::selection {
+  background-color: var(--color-accent-light);
+  color: var(--color-sand-900);
+}
+
+input:focus,
+textarea:focus,
+button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
