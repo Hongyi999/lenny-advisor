@@ -11,7 +11,7 @@ import type { GuestData } from "@/data/guests";
 const Globe = dynamic(() => import("@/components/hero/Globe"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-[400px] sm:h-[480px] md:h-[560px] flex items-center justify-center">
+    <div className="w-full h-[500px] sm:h-[580px] md:h-[660px] lg:h-[720px] flex items-center justify-center">
       <div className="w-16 h-16 rounded-full border-2 border-[#e8e0d0] border-t-[#d4a853] animate-spin" />
     </div>
   ),
@@ -20,7 +20,7 @@ const Globe = dynamic(() => import("@/components/hero/Globe"), {
 export default function HomePage() {
   const [activeGuest, setActiveGuest] = useState<GuestData | null>(null);
 
-  const handleGuestChange = useCallback((guest: GuestData | null) => {
+  const handleGuestChange = useCallback((guest: GuestData) => {
     setActiveGuest(guest);
   }, []);
 
@@ -29,7 +29,7 @@ export default function HomePage() {
       <Navbar />
 
       {/* Hero Content */}
-      <main className="relative pt-24 sm:pt-28 pb-8 px-4 sm:px-6">
+      <main className="relative pt-24 sm:pt-28 px-4 sm:px-6">
         {/* Title */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -50,31 +50,41 @@ export default function HomePage() {
         {/* Search Bar */}
         <SearchBar />
 
-        {/* Globe */}
+        {/* Globe + Floating Spotlight */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
-          className="mt-6 sm:mt-8"
+          className="relative mt-4 sm:mt-6"
         >
+          {/* Globe */}
           <Globe onGuestChange={handleGuestChange} />
-        </motion.div>
 
-        {/* Guest Spotlight Card */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
-          className="-mt-4"
-        >
-          <GuestCard guest={activeGuest} total={300} />
+          {/* Floating spotlight card - overlays bottom half of globe */}
+          <div className="absolute inset-x-0 bottom-0 z-10 pointer-events-none">
+            {/* Gradient fade from transparent to background color */}
+            <div
+              className="h-48 sm:h-56"
+              style={{
+                background:
+                  "linear-gradient(to bottom, transparent 0%, #f5f0e8 70%)",
+              }}
+            />
+            <div className="bg-[#f5f0e8] pb-6 -mt-1">
+              <GuestCard guest={activeGuest} />
+            </div>
+          </div>
         </motion.div>
 
         {/* Bottom hint */}
-        <div className="flex items-center justify-center gap-3 mt-4 pb-6">
-          <span className="text-xs text-[#b0a090]">Hold &amp; drag to explore</span>
+        <div className="flex items-center justify-center gap-3 pb-8">
+          <span className="text-xs text-[#b0a090]">
+            Hold &amp; drag to explore
+          </span>
           <span className="text-[#d0c8b8]">&middot;</span>
-          <span className="text-xs text-[#b0a090]">Guests from around the world</span>
+          <span className="text-xs text-[#b0a090]">
+            Guests from around the world
+          </span>
         </div>
       </main>
     </div>
