@@ -4,19 +4,14 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { GuestData } from "@/data/guests";
 
-function useTypewriter(text: string, speed: number = 25) {
+function useTypewriter(text: string, speed: number = 20) {
   const [displayed, setDisplayed] = useState("");
   const [done, setDone] = useState(false);
   useEffect(() => {
-    setDisplayed("");
-    setDone(false);
+    setDisplayed(""); setDone(false);
     if (!text) return;
     let i = 0;
-    const iv = setInterval(() => {
-      i++;
-      setDisplayed(text.slice(0, i));
-      if (i >= text.length) { clearInterval(iv); setDone(true); }
-    }, speed);
+    const iv = setInterval(() => { i++; setDisplayed(text.slice(0, i)); if (i >= text.length) { clearInterval(iv); setDone(true); } }, speed);
     return () => clearInterval(iv);
   }, [text, speed]);
   return { displayed, done };
@@ -24,10 +19,11 @@ function useTypewriter(text: string, speed: number = 25) {
 
 export default function GuestCard({ guest }: { guest: GuestData | null }) {
   const { displayed, done } = useTypewriter(guest?.question ?? "", 20);
+  const ytUrl = guest?.video_id ? `https://www.youtube.com/watch?v=${guest.video_id}` : null;
 
   return (
     <div className="flex justify-center">
-      <div className="w-full max-w-lg min-h-[140px]">
+      <div className="w-full max-w-xl min-h-[200px]">
         <AnimatePresence mode="wait">
           {guest && (
             <motion.div
@@ -36,27 +32,60 @@ export default function GuestCard({ guest }: { guest: GuestData | null }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -16 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
-              className="bg-white rounded-2xl shadow-lg shadow-black/[0.04] px-8 py-6 text-center"
+              className="text-center"
             >
+              {/* YouTube Thumbnail */}
+              {guest.thumbnail && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                  className="mx-auto mb-4 max-w-xs"
+                >
+                  <a
+                    href={ytUrl ?? "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block relative rounded-xl overflow-hidden shadow-md shadow-black/[0.06] hover:shadow-lg transition-shadow group"
+                  >
+                    <div className="aspect-video bg-[#e8e0d0]">
+                      <img
+                        src={guest.thumbnail}
+                        alt={guest.guest}
+                        className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                        loading="eager"
+                      />
+                    </div>
+                    {/* Play button overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
+                        <svg viewBox="0 0 24 24" className="w-5 h-5 text-white ml-0.5" fill="currentColor">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      </div>
+                    </div>
+                    {/* Bottom gradient */}
+                    <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/30 to-transparent" />
+                    <div className="absolute bottom-1.5 left-2.5 right-2.5 flex items-center gap-1.5">
+                      <span className="text-white text-[11px] font-medium truncate">{guest.guest}</span>
+                      <span className="text-white/50 text-[11px]">· Lenny&apos;s Podcast</span>
+                    </div>
+                  </a>
+                </motion.div>
+              )}
+
               {/* Guest name badge */}
-              <div className="mb-3">
+              <div className="mb-2">
                 <span className="inline-block px-3 py-1 rounded-full bg-[#d4a853]/10 text-[#a07d25] text-xs font-semibold tracking-wider uppercase">
                   {guest.guest}
                 </span>
               </div>
 
               {/* Typewriter quote */}
-              <p className="text-[#1a1a1a] text-lg sm:text-xl font-serif italic leading-relaxed">
+              <p className="text-[#1a1a1a] text-lg sm:text-xl font-serif italic leading-relaxed px-2">
                 &ldquo;{displayed}
-                {!done && (
-                  <span className="inline-block w-0.5 h-5 bg-[#d4a853] ml-0.5 align-text-bottom animate-pulse" />
-                )}
+                {!done && <span className="inline-block w-0.5 h-5 bg-[#d4a853] ml-0.5 align-text-bottom animate-pulse" />}
                 {done && <>&rdquo;</>}
-              </p>
-
-              {/* Episode title as subtitle */}
-              <p className="text-[#999] text-sm mt-3 line-clamp-1">
-                {guest.title}
               </p>
             </motion.div>
           )}
