@@ -26,8 +26,8 @@ export default function HomePage() {
     target: globeSectionRef,
     offset: ["start end", "center center"],
   });
-  // Scale from 0.88 → 1.0 as globe scrolls into view
-  const globeScale = useTransform(scrollYProgress, [0, 1], [0.88, 1.0]);
+  // Scale from 0.8 → 1.05 as globe scrolls into view — dramatic zoom
+  const globeScale = useTransform(scrollYProgress, [0, 1], [0.8, 1.05]);
 
   return (
     <div className="min-h-screen bg-[#f5f0e8]">
@@ -69,7 +69,7 @@ export default function HomePage() {
         {/* Guest card overlay - compact gradient so globe is more visible */}
         <div className="absolute inset-x-0 bottom-0 z-10 pointer-events-none">
           {/* Gradient fade: transparent → page bg (shorter) */}
-          <div className="h-24 sm:h-32" style={{ background: "linear-gradient(to bottom, transparent 0%, #f5f0e8 85%)" }} />
+          <div className="h-16 sm:h-20" style={{ background: "linear-gradient(to bottom, transparent 0%, #f5f0e8 90%)" }} />
           <div className="bg-[#f5f0e8] pointer-events-auto pb-4">
             <GuestCard guest={activeGuest} />
           </div>

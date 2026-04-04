@@ -85,10 +85,10 @@ function sr(): number { _s = (_s * 16807) % 2147483647; return (_s - 1) / 214748
 function sampleEdgeDense(): [number, number][] {
   _s = 42;
   const dots: [number, number][] = [];
-  const edgeThreshold = 4;  // degrees from edge considered "near edge"
-  const edgeStep = 0.8;     // dense step near edges
-  const interiorStep = 1.8; // sparse step for interior
-  const interiorDropout = 0.45; // 45% chance to skip interior points
+  const edgeThreshold = 5;  // degrees from edge considered "near edge"
+  const edgeStep = 0.6;     // very dense step near edges
+  const interiorStep = 1.2; // denser interior
+  const interiorDropout = 0.3; // 30% chance to skip interior points
 
   for (const poly of POLYS) {
     let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;

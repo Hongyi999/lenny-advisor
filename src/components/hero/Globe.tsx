@@ -45,7 +45,8 @@ function latToRotX(lat: number): number {
   // Base tilt: bring the guest's latitude toward screen center
   // Positive lat (northern) → tilt globe forward (negative X rot)
   // Negative lat (southern) → tilt globe backward (positive X rot)
-  const baseTilt = -(lat * Math.PI) / 180 * 0.35;
+  // Stronger tilt factor so the difference is visually obvious
+  const baseTilt = -(lat * Math.PI) / 180 * 0.55;
   return baseTilt;
 }
 
@@ -55,7 +56,7 @@ function CleanGrid({ r }: { r: number }) {
   const objs = useMemo(() => {
     const segs = 72;
     const mat = new THREE.LineBasicMaterial({ color: "#000000", transparent: true, opacity: 0.05, depthWrite: false });
-    const eqMat = new THREE.LineBasicMaterial({ color: "#000000", transparent: true, opacity: 0.18, depthWrite: false });
+    const eqMat = new THREE.LineBasicMaterial({ color: "#000000", transparent: true, opacity: 0.3, depthWrite: false });
     const lines: THREE.Line[] = [];
 
     for (let lat = -80; lat <= 80; lat += 10) {
@@ -120,7 +121,7 @@ function ContinentCloud({ r }: { r: number }) {
 
   return (
     <points geometry={geo}>
-      <pointsMaterial color="#000000" size={0.02} transparent opacity={0.22} sizeAttenuation depthWrite={false} />
+      <pointsMaterial color="#000000" size={0.018} transparent opacity={0.3} sizeAttenuation depthWrite={false} />
     </points>
   );
 }
@@ -255,7 +256,7 @@ function Scene({ onGuestChange }: GlobeProps) {
         <ContinentCloud r={R} />
         <GuestMarkers r={R} activeIdx={activeIdx} />
       </RotatingScene>
-      <OrbitControls enableZoom={false} enablePan={false} rotateSpeed={0.3} minPolarAngle={Math.PI * 0.3} maxPolarAngle={Math.PI * 0.7} />
+      <OrbitControls enableZoom={false} enablePan={false} rotateSpeed={0.3} minPolarAngle={Math.PI * 0.15} maxPolarAngle={Math.PI * 0.85} />
     </>
   );
 }
