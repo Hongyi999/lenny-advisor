@@ -2,12 +2,12 @@
 
 import { useRef, useMemo, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, Line, Billboard } from "@react-three/drei";
+import { OrbitControls, Billboard } from "@react-three/drei";
 import * as THREE from "three";
 import { GUESTS, type GuestData } from "@/data/guests";
 import { CONTINENT_DOTS } from "@/data/continentDots";
 
-// --- Geometry ---
+/* ── helpers ───────────────────────────────────────────────── */
 
 function ll2v(lat: number, lng: number, r: number): THREE.Vector3 {
   const phi = (90 - lat) * (Math.PI / 180);
@@ -19,75 +19,68 @@ function ll2v(lat: number, lng: number, r: number): THREE.Vector3 {
   );
 }
 
-function makeGrid(
-  r: number,
-  latN: number,
-  lngN: number,
-  seg: number
-): [number, number, number][][] {
-  const out: [number, number, number][][] = [];
-  for (let i = 0; i <= latN; i++) {
-    const lat = -90 + (180 * i) / latN;
-    const pts: [number, number, number][] = [];
-    for (let j = 0; j <= seg; j++) {
-      const v = ll2v(lat, -180 + (360 * j) / seg, r);
-      pts.push([v.x, v.y, v.z]);
-    }
-    out.push(pts);
-  }
-  for (let j = 0; j <= lngN; j++) {
-    const lng = -180 + (360 * j) / lngN;
-    const pts: [number, number, number][] = [];
-    for (let i = 0; i <= seg; i++) {
-      const v = ll2v(-90 + (180 * i) / seg, lng, r);
-      pts.push([v.x, v.y, v.z]);
-    }
-    out.push(pts);
-  }
-  return out;
-}
-
-// Normalize angle to [-PI, PI]
 function normalizeAngle(a: number): number {
   while (a > Math.PI) a -= 2 * Math.PI;
   while (a < -Math.PI) a += 2 * Math.PI;
   return a;
 }
 
-// Calculate what Y-rotation of the group places a point at (lat, lng) facing the camera (+Z)
 function lngToRotY(lng: number): number {
-  // In ll2v, theta = (lng+180) * PI/180.  x = -r*sin(phi)*cos(theta), z = r*sin(phi)*sin(theta)
-  // For point to face camera (+Z), we need: groupRotY + theta = PI/2  (so sin is max)
-  // → groupRotY = PI/2 - theta = PI/2 - (lng+180)*PI/180
   return Math.PI / 2 - ((lng + 180) * Math.PI) / 180;
 }
 
-// --- Sub-components ---
+/* ── Problem 1: Clean lat/lng grid lines ──────────────────── */
+/* 36 meridians (every 10°) + 17 parallels (every 10°, skip poles) */
 
-function GridSphere({ r }: { r: number }) {
-  const lines = useMemo(() => makeGrid(r, 18, 36, 72), [r]);
+function CleanGrid({ r }: { r: number }) {
+  const lineObjects = useMemo(() => {
+    const segments = 64;
+    const mat = new THREE.LineBasicMaterial({ color: "#000000", transparent: true, opacity: 0.06, depthWrite: false });
+    const objs: THREE.Line[] = [];
+
+    // Latitude lines (parallels) every 10°, from -80 to 80
+    for (let lat = -80; lat <= 80; lat += 10) {
+      const positions = new Float32Array((segments + 1) * 3);
+      for (let i = 0; i <= segments; i++) {
+        const v = ll2v(lat, -180 + (360 * i) / segments, r);
+        positions[i * 3] = v.x; positions[i * 3 + 1] = v.y; positions[i * 3 + 2] = v.z;
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      objs.push(new THREE.Line(geo, mat));
+    }
+
+    // Longitude lines (meridians) every 10°
+    for (let lng = -180; lng < 180; lng += 10) {
+      const positions = new Float32Array((segments + 1) * 3);
+      for (let i = 0; i <= segments; i++) {
+        const v = ll2v(-90 + (180 * i) / segments, lng, r);
+        positions[i * 3] = v.x; positions[i * 3 + 1] = v.y; positions[i * 3 + 2] = v.z;
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      objs.push(new THREE.Line(geo, mat));
+    }
+
+    return objs;
+  }, [r]);
+
   return (
     <group>
-      {lines.map((pts, i) => (
-        <Line
-          key={i}
-          points={pts}
-          color="#c0b8aa"
-          lineWidth={0.35}
-          transparent
-          opacity={0.1}
-        />
+      {lineObjects.map((obj, i) => (
+        <primitive key={i} object={obj} />
       ))}
     </group>
   );
 }
 
-/** Dense dot-cloud filling continent shapes */
+/* ── Problem 2: Continent dot cloud ───────────────────────── */
+
 function ContinentCloud({ r }: { r: number }) {
   const geo = useMemo(() => {
     const pos = new Float32Array(CONTINENT_DOTS.length * 3);
     for (let i = 0; i < CONTINENT_DOTS.length; i++) {
-      const v = ll2v(CONTINENT_DOTS[i][0], CONTINENT_DOTS[i][1], r + 0.004);
+      const v = ll2v(CONTINENT_DOTS[i][0], CONTINENT_DOTS[i][1], r + 0.003);
       pos[i * 3] = v.x;
       pos[i * 3 + 1] = v.y;
       pos[i * 3 + 2] = v.z;
@@ -100,10 +93,10 @@ function ContinentCloud({ r }: { r: number }) {
   return (
     <points geometry={geo}>
       <pointsMaterial
-        color="#8a8070"
-        size={0.028}
+        color="#000000"
+        size={0.022}
         transparent
-        opacity={0.65}
+        opacity={0.25}
         sizeAttenuation
         depthWrite={false}
       />
@@ -111,12 +104,13 @@ function ContinentCloud({ r }: { r: number }) {
   );
 }
 
-/** All 302 guest markers as Points */
+/* ── Problem 3: Guest markers (all 302) ───────────────────── */
+
 function GuestMarkers({ r, activeIdx }: { r: number; activeIdx: number }) {
   const geo = useMemo(() => {
     const pos = new Float32Array(GUESTS.length * 3);
     for (let i = 0; i < GUESTS.length; i++) {
-      const v = ll2v(GUESTS[i].lat, GUESTS[i].lng, r + 0.012);
+      const v = ll2v(GUESTS[i].lat, GUESTS[i].lng, r + 0.01);
       pos[i * 3] = v.x;
       pos[i * 3 + 1] = v.y;
       pos[i * 3 + 2] = v.z;
@@ -126,36 +120,31 @@ function GuestMarkers({ r, activeIdx }: { r: number; activeIdx: number }) {
     return g;
   }, [r]);
 
-  // Active guest highlight position
   const activePos = useMemo(() => {
     if (activeIdx < 0 || activeIdx >= GUESTS.length) return null;
-    return ll2v(GUESTS[activeIdx].lat, GUESTS[activeIdx].lng, r + 0.014);
+    return ll2v(GUESTS[activeIdx].lat, GUESTS[activeIdx].lng, r + 0.012);
   }, [activeIdx, r]);
 
   return (
     <group>
-      {/* All guest dots - warm gold */}
       <points geometry={geo}>
         <pointsMaterial
-          color="#c8a050"
-          size={0.035}
+          color="#d4a853"
+          size={0.04}
           transparent
-          opacity={0.8}
+          opacity={0.85}
           sizeAttenuation
           depthWrite={false}
         />
       </points>
-
-      {/* Active guest: pulsing glow */}
-      {activePos && <ActiveRing position={activePos} />}
+      {activePos && <ActiveHighlight position={activePos} />}
     </group>
   );
 }
 
-function ActiveRing({ position }: { position: THREE.Vector3 }) {
+function ActiveHighlight({ position }: { position: THREE.Vector3 }) {
   const ref = useRef<THREE.Mesh>(null);
   const t = useRef(0);
-
   useFrame((_, dt) => {
     if (!ref.current) return;
     t.current += dt;
@@ -166,40 +155,22 @@ function ActiveRing({ position }: { position: THREE.Vector3 }) {
   return (
     <group position={position}>
       <Billboard>
-        {/* Outer pulsing ring */}
         <mesh ref={ref}>
           <ringGeometry args={[0.06, 0.1, 32]} />
-          <meshBasicMaterial
-            color="#d4a853"
-            transparent
-            opacity={0.6}
-            side={THREE.DoubleSide}
-            depthWrite={false}
-          />
+          <meshBasicMaterial color="#d4a853" transparent opacity={0.6} side={THREE.DoubleSide} depthWrite={false} />
         </mesh>
-        {/* Inner solid dot */}
         <mesh>
-          <circleGeometry args={[0.045, 20]} />
-          <meshBasicMaterial
-            color="#d4a853"
-            transparent
-            opacity={0.95}
-            depthWrite={false}
-          />
+          <circleGeometry args={[0.05, 24]} />
+          <meshBasicMaterial color="#d4a853" transparent opacity={0.95} depthWrite={false} />
         </mesh>
       </Billboard>
     </group>
   );
 }
 
-/** Rotating group: auto-rotates + snaps to active guest front-center */
-function RotatingScene({
-  children,
-  activeIdx,
-}: {
-  children: React.ReactNode;
-  activeIdx: number;
-}) {
+/* ── Rotation ─────────────────────────────────────────────── */
+
+function RotatingScene({ children, activeIdx }: { children: React.ReactNode; activeIdx: number }) {
   const groupRef = useRef<THREE.Group>(null);
   const currentY = useRef(0);
   const targetY = useRef<number | null>(null);
@@ -208,49 +179,35 @@ function RotatingScene({
 
   useEffect(() => {
     if (activeIdx < 0 || activeIdx >= GUESTS.length) return;
-
-    const g = GUESTS[activeIdx];
-    // Compute target RELATIVE to current position (avoids wrap-around jump)
-    const desiredY = lngToRotY(g.lng);
-    const diff = normalizeAngle(desiredY - currentY.current);
+    const desired = lngToRotY(GUESTS[activeIdx].lng);
+    const diff = normalizeAngle(desired - currentY.current);
     targetY.current = currentY.current + diff;
     isIdle.current = false;
-
-    // After settling, resume idle rotation
     if (idleTimer.current) clearTimeout(idleTimer.current);
-    idleTimer.current = setTimeout(() => {
-      isIdle.current = true;
-    }, 5000);
-
-    return () => {
-      if (idleTimer.current) clearTimeout(idleTimer.current);
-    };
+    idleTimer.current = setTimeout(() => { isIdle.current = true; }, 5000);
+    return () => { if (idleTimer.current) clearTimeout(idleTimer.current); };
   }, [activeIdx]);
 
   useFrame((_, dt) => {
     if (!groupRef.current) return;
-
     if (targetY.current !== null) {
       const remaining = targetY.current - currentY.current;
       if (Math.abs(remaining) < 0.003) {
         currentY.current = targetY.current;
         targetY.current = null;
       } else {
-        // Smooth ease toward target (no normalizeAngle needed — target is already nearby)
         currentY.current += remaining * Math.min(dt * 2.5, 0.06);
       }
     } else if (isIdle.current) {
-      // Slow auto-rotation ~60s/rev
       currentY.current += dt * 0.1;
     }
-
     groupRef.current.rotation.y = currentY.current;
   });
 
   return <group ref={groupRef}>{children}</group>;
 }
 
-// --- Exported Globe ---
+/* ── Main exported component ──────────────────────────────── */
 
 interface GlobeProps {
   onGuestChange?: (guest: GuestData, index: number) => void;
@@ -266,19 +223,16 @@ function Scene({ onGuestChange }: GlobeProps) {
       setActiveIdx(idx);
       onGuestChange?.(GUESTS[idx], idx);
     }
-    const first = setTimeout(pick, 1200);
-    const iv = setInterval(pick, 7000);
-    return () => {
-      clearTimeout(first);
-      clearInterval(iv);
-    };
+    const first = setTimeout(pick, 1500);
+    const iv = setInterval(pick, 6000);
+    return () => { clearTimeout(first); clearInterval(iv); };
   }, [onGuestChange]);
 
   return (
     <>
-      <ambientLight intensity={0.6} />
+      <ambientLight intensity={0.5} />
       <RotatingScene activeIdx={activeIdx}>
-        <GridSphere r={R} />
+        <CleanGrid r={R} />
         <ContinentCloud r={R} />
         <GuestMarkers r={R} activeIdx={activeIdx} />
       </RotatingScene>
@@ -295,15 +249,13 @@ function Scene({ onGuestChange }: GlobeProps) {
 
 export default function Globe({ onGuestChange }: GlobeProps) {
   return (
-    <div className="w-full h-[500px] sm:h-[580px] md:h-[660px] lg:h-[720px]">
-      <Canvas
-        camera={{ position: [0, 0.2, 5.0], fov: 38 }}
-        style={{ background: "transparent" }}
-        gl={{ alpha: true, antialias: true }}
-        dpr={[1, 1.5]}
-      >
-        <Scene onGuestChange={onGuestChange} />
-      </Canvas>
-    </div>
+    <Canvas
+      camera={{ position: [0, 0.3, 5.2], fov: 36 }}
+      style={{ background: "transparent" }}
+      gl={{ alpha: true, antialias: true }}
+      dpr={[1, 1.5]}
+    >
+      <Scene onGuestChange={onGuestChange} />
+    </Canvas>
   );
 }
