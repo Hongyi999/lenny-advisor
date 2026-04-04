@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anthropic — Clone Preview</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --cream: #faf9f6;
+      --cream-dark: #f0ede6;
+      --border: #e8e4db;
+      --border-hover: #d4c9b8;
+      --text-primary: #191918;
+      --text-secondary: #4a4a46;
+      --text-tertiary: #6b6b66;
+      --text-muted: #9a9a94;
+      --dark: #191918;
+      --dark-card: #232322;
+      --dark-border: #333332;
+      --coral: #c4704b;
+      --teal: #2d7a7a;
+      --gold: #b8963e;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      color: var(--text-primary);
+      background: var(--cream);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { text-decoration: none; color: inherit; }
+
+    .container { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
+    @media (min-width: 1024px) { .container { padding: 0 40px; } }
+
+    /* ===== HEADER ===== */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+      background: rgba(250,249,246,0.8);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    }
+    .header-inner {
+      max-width: 1400px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 24px;
+    }
+    @media (min-width: 1024px) { .header-inner { padding: 16px 40px; } }
+
+    .logo { display: flex; align-items: center; gap: 8px; }
+    .logo svg { width: 32px; height: 32px; }
+    .logo span { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
+
+    nav { display: flex; align-items: center; gap: 32px; }
+    nav a { font-size: 15px; color: var(--text-secondary); transition: color 0.2s; }
+    nav a:hover { color: var(--text-primary); }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 20px; border-radius: 9999px;
+      background: var(--dark); color: #fff;
+      font-size: 14px; font-weight: 500;
+      transition: all 0.2s; border: none; cursor: pointer;
+    }
+    .btn-primary:hover { background: #333332; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+
+    .btn-outline {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 28px; border-radius: 9999px;
+      border: 1px solid var(--border-hover); color: var(--text-primary);
+      font-weight: 500; transition: all 0.2s; background: transparent; cursor: pointer;
+    }
+    .btn-outline:hover { background: var(--cream-dark); }
+
+    .btn-large { padding: 14px 28px; font-size: 16px; }
+
+    /* Arrow icon inline */
+    .arrow { display: inline-block; width: 16px; height: 16px; }
+    .arrow-sm { width: 14px; height: 14px; }
+
+    /* ===== HERO ===== */
+    .hero {
+      position: relative;
+      padding: 128px 0 80px;
+    }
+    @media (min-width: 1024px) { .hero { padding: 176px 0 128px; } }
+
+    .hero-content { max-width: 800px; }
+
+    .hero-label {
+      font-size: 13px; font-weight: 500; color: var(--text-tertiary);
+      text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      font-weight: 500; line-height: 1.05; letter-spacing: -0.02em;
+      margin-bottom: 32px;
+    }
+
+    .hero-desc {
+      font-size: 18px; color: var(--text-tertiary);
+      line-height: 1.7; max-width: 640px; margin-bottom: 40px;
+    }
+    @media (min-width: 1024px) { .hero-desc { font-size: 20px; } }
+
+    .hero-buttons { display: flex; flex-wrap: wrap; gap: 16px; }
+
+    .hero-orb {
+      position: absolute; top: 50%; right: 40px;
+      transform: translateY(-50%);
+      width: 500px; height: 500px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(196,112,75,0.08) 0%, rgba(184,150,62,0.04) 50%, transparent 70%);
+      pointer-events: none;
+      display: none;
+    }
+    @media (min-width: 1024px) { .hero-orb { display: block; } }
+
+    /* ===== ANNOUNCEMENT BANNER ===== */
+    .announcement {
+      padding: 0 24px 80px;
+    }
+    @media (min-width: 1024px) { .announcement { padding: 0 40px 80px; } }
+
+    .announcement-card {
+      max-width: 1400px; margin: 0 auto;
+      position: relative; overflow: hidden;
+      border-radius: 24px; background: var(--dark); color: #fff;
+      padding: 40px;
+    }
+    @media (min-width: 1024px) { .announcement-card { padding: 64px; } }
+
+    .announcement-content { position: relative; z-index: 1; max-width: 640px; }
+
+    .announcement-badge {
+      display: inline-block; padding: 4px 12px; border-radius: 9999px;
+      background: rgba(255,255,255,0.1); font-size: 14px; font-weight: 500;
+      margin-bottom: 24px;
+    }
+
+    .announcement-card h2 {
+      font-size: 30px; font-weight: 500; line-height: 1.2;
+      letter-spacing: -0.02em; margin-bottom: 16px;
+    }
+    @media (min-width: 1024px) { .announcement-card h2 { font-size: 36px; } }
+
+    .announcement-card p {
+      color: var(--text-muted); font-size: 18px;
+      line-height: 1.7; margin-bottom: 32px;
+    }
+
+    .btn-white {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 24px; border-radius: 9999px;
+      background: #fff; color: var(--dark);
+      font-size: 14px; font-weight: 500;
+      transition: all 0.2s; border: none; cursor: pointer;
+    }
+    .btn-white:hover { background: var(--cream-dark); }
+
+    .announcement-glow {
+      position: absolute; top: 0; right: 0; width: 50%; height: 100%;
+      opacity: 0.2; pointer-events: none;
+    }
+    .announcement-glow::after {
+      content: ''; position: absolute;
+      top: 50%; right: -10%; transform: translateY(-50%);
+      width: 400px; height: 400px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(196,112,75,0.6) 0%, transparent 70%);
+    }
+
+    /* ===== NEWS CARDS ===== */
+    .news { padding: 0 24px 96px; }
+    @media (min-width: 1024px) { .news { padding: 0 40px 96px; } }
+
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 40px;
+    }
+    .section-header h2 { font-size: 24px; font-weight: 500; letter-spacing: -0.02em; }
+    .section-header a {
+      font-size: 14px; font-weight: 500; color: var(--text-tertiary);
+      display: flex; align-items: center; gap: 4px; transition: color 0.2s;
+    }
+    .section-header a:hover { color: var(--text-primary); }
+
+    .news-grid {
+      display: grid; grid-template-columns: 1fr; gap: 24px;
+    }
+    @media (min-width: 768px) { .news-grid { grid-template-columns: repeat(3, 1fr); } }
+
+    .news-card {
+      display: flex; flex-direction: column;
+      border-radius: 16px; overflow: hidden;
+      background: #fff; border: 1px solid var(--border);
+      transition: all 0.3s;
+    }
+    .news-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.08); border-color: var(--border-hover); }
+
+    .news-card-image { height: 192px; width: 100%; }
+
+    .news-card-body { padding: 24px; display: flex; flex-direction: column; flex: 1; }
+
+    .news-card-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .news-card-tag {
+      font-size: 12px; font-weight: 500; color: var(--coral);
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .news-card-date { font-size: 12px; color: var(--text-muted); }
+
+    .news-card h3 { font-size: 18px; font-weight: 500; margin-bottom: 8px; }
+    .news-card:hover h3 { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+
+    .news-card p { font-size: 14px; color: var(--text-tertiary); line-height: 1.6; flex: 1; }
+
+    .news-card-link {
+      margin-top: 16px; font-size: 14px; font-weight: 500;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .news-card:hover .news-card-link .arrow-sm { transform: translateX(4px); }
+    .news-card-link .arrow-sm { transition: transform 0.2s; }
+
+    /* ===== CLAUDE PRODUCT ===== */
+    .claude-section {
+      padding: 96px 24px; background: var(--cream-dark);
+      border-top: 1px solid var(--border);
+    }
+    @media (min-width: 1024px) { .claude-section { padding: 96px 40px; } }
+
+    .section-label {
+      font-size: 13px; font-weight: 500; text-transform: uppercase;
+      letter-spacing: 0.05em; margin-bottom: 16px;
+    }
+
+    .section-intro { max-width: 640px; margin-bottom: 64px; }
+    .section-intro h2 {
+      font-size: 36px; font-weight: 500; line-height: 1.15;
+      letter-spacing: -0.02em; margin-bottom: 24px;
+    }
+    @media (min-width: 1024px) { .section-intro h2 { font-size: 48px; } }
+
+    .section-intro p { font-size: 18px; color: var(--text-tertiary); line-height: 1.7; }
+
+    .features-grid {
+      display: grid; grid-template-columns: 1fr; gap: 24px;
+    }
+    @media (min-width: 640px) { .features-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1024px) { .features-grid { grid-template-columns: repeat(4, 1fr); } }
+
+    .feature-card {
+      padding: 24px; border-radius: 16px;
+      background: #fff; border: 1px solid var(--border);
+    }
+    .feature-card h3 { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+    .feature-card p { font-size: 14px; color: var(--text-tertiary); line-height: 1.6; }
+
+    .section-cta { margin-top: 40px; }
+
+    /* ===== RESEARCH ===== */
+    .research-section { padding: 96px 24px; }
+    @media (min-width: 1024px) { .research-section { padding: 96px 40px; } }
+
+    .research-grid {
+      display: grid; grid-template-columns: 1fr; gap: 24px;
+    }
+    @media (min-width: 768px) { .research-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .research-card {
+      display: flex; gap: 20px; padding: 24px;
+      border-radius: 16px; border: 1px solid var(--border);
+      background: #fff; transition: all 0.3s;
+    }
+    .research-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); border-color: var(--border-hover); }
+
+    .research-bar { width: 4px; border-radius: 9999px; flex-shrink: 0; }
+
+    .research-card h3 { font-size: 18px; font-weight: 500; margin-bottom: 8px; }
+    .research-card:hover h3 { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+    .research-card p { font-size: 14px; color: var(--text-tertiary); line-height: 1.6; }
+
+    /* ===== COMMITMENTS ===== */
+    .commitments-section {
+      padding: 96px 24px; background: var(--dark); color: #fff;
+    }
+    @media (min-width: 1024px) { .commitments-section { padding: 96px 40px; } }
+
+    .commitments-grid {
+      display: grid; grid-template-columns: 1fr; gap: 32px;
+    }
+    @media (min-width: 768px) { .commitments-grid { grid-template-columns: repeat(3, 1fr); } }
+
+    .commitment-card {
+      border-top: 1px solid var(--dark-border); padding-top: 32px;
+    }
+    .commitment-num {
+      font-size: 14px; font-family: 'JetBrains Mono', monospace;
+      color: var(--text-tertiary); margin-bottom: 16px;
+    }
+    .commitment-card h3 { font-size: 20px; font-weight: 500; margin-bottom: 12px; }
+    .commitment-card p { font-size: 14px; color: var(--text-muted); line-height: 1.7; }
+
+    /* ===== CAREERS CTA ===== */
+    .careers-section { padding: 96px 24px; }
+    @media (min-width: 1024px) { .careers-section { padding: 96px 40px; } }
+
+    .careers-card {
+      max-width: 1400px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 32px;
+      padding: 40px; border-radius: 24px;
+      border: 1px solid var(--border); background: var(--cream-dark);
+    }
+    @media (min-width: 1024px) {
+      .careers-card {
+        flex-direction: row; align-items: center; justify-content: space-between;
+        padding: 64px;
+      }
+    }
+    .careers-content { max-width: 560px; }
+    .careers-card h2 {
+      font-size: 30px; font-weight: 500; line-height: 1.2;
+      letter-spacing: -0.02em; margin-bottom: 16px;
+    }
+    @media (min-width: 1024px) { .careers-card h2 { font-size: 36px; } }
+    .careers-card p { color: var(--text-tertiary); line-height: 1.7; }
+
+    /* ===== FOOTER ===== */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 64px 24px; background: var(--cream);
+    }
+    @media (min-width: 1024px) { footer { padding: 64px 40px; } }
+
+    .footer-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 32px;
+      margin-bottom: 64px;
+    }
+    @media (min-width: 768px) { .footer-grid { grid-template-columns: repeat(4, 1fr); } }
+
+    .footer-col h4 { font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+    .footer-col ul { list-style: none; }
+    .footer-col li { margin-bottom: 12px; }
+    .footer-col a { font-size: 14px; color: var(--text-tertiary); transition: color 0.2s; }
+    .footer-col a:hover { color: var(--text-primary); }
+
+    .footer-bottom {
+      display: flex; flex-direction: column; gap: 16px;
+      padding-top: 32px; border-top: 1px solid var(--border);
+    }
+    @media (min-width: 640px) {
+      .footer-bottom { flex-direction: row; align-items: center; justify-content: space-between; }
+    }
+    .footer-logo { display: flex; align-items: center; gap: 8px; }
+    .footer-logo svg { width: 24px; height: 24px; }
+    .footer-logo span { font-size: 14px; font-weight: 600; }
+    .footer-copy { font-size: 12px; color: var(--text-muted); }
+
+    /* ===== MOBILE NAV HIDDEN ===== */
+    @media (max-width: 767px) { nav { display: none; } }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <a href="#" class="logo">
+      <svg viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="256" height="256" rx="60" fill="#191918"/>
+        <path d="M147.5 48L60 208h37.5L185 48h-37.5zM108 208l50-108h37.5L145.5 208H108z" fill="#faf9f6"/>
+      </svg>
+      <span>anthropic</span>
+    </a>
+    <nav>
+      <a href="#api">API</a>
+      <a href="#research">Research</a>
+      <a href="#news">News</a>
+      <a href="#commitments">Commitments</a>
+      <a href="#careers">Careers</a>
+    </nav>
+    <a href="#claude" class="btn-primary">
+      Try Claude
+      <svg class="arrow-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+    </a>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-content">
+      <p class="hero-label">Anthropic</p>
+      <h1>The responsible development and maintenance of advanced AI for the long-term benefit of humanity.</h1>
+      <p class="hero-desc">We build reliable, interpretable, and steerable AI systems. Our flagship product Claude is a helpful AI assistant designed to be safe at its core.</p>
+      <div class="hero-buttons">
+        <a href="#claude" class="btn-primary btn-large">
+          Meet Claude
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+        <a href="#research" class="btn-outline">Our Research</a>
+      </div>
+    </div>
+  </div>
+  <div class="hero-orb"></div>
+</section>
+
+<!-- ANNOUNCEMENT BANNER -->
+<section class="announcement">
+  <div class="announcement-card container" style="padding:40px;max-width:1400px;">
+    <div style="position:relative;overflow:hidden;border-radius:24px;background:#191918;color:#fff;padding:40px;">
+      <div class="announcement-content">
+        <span class="announcement-badge">New</span>
+        <h2>Claude is ready to help.</h2>
+        <p>No ads. No sponsored content. Just genuinely helpful conversations. Claude can help you think through problems, create content, and get work done.</p>
+        <a href="#claude" class="btn-white">
+          Try Claude for free
+          <svg class="arrow-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+      <div class="announcement-glow"></div>
+    </div>
+  </div>
+</section>
+
+<!-- NEWS -->
+<section class="news" id="news">
+  <div class="container">
+    <div class="section-header">
+      <h2>Latest Updates</h2>
+      <a href="#">View all <svg class="arrow-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+    </div>
+    <div class="news-grid">
+
+      <a href="#" class="news-card">
+        <div class="news-card-image" style="background:linear-gradient(135deg, #c4704b 0%, #b8963e 100%)"></div>
+        <div class="news-card-body">
+          <div class="news-card-meta">
+            <span class="news-card-tag">Announcements</span>
+            <span class="news-card-date">Apr 2, 2026</span>
+          </div>
+          <h3>Introducing Claude Opus 4.6</h3>
+          <p>Our most capable model yet, with breakthrough reasoning and agentic capabilities.</p>
+          <div class="news-card-link">Read more <svg class="arrow-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+        </div>
+      </a>
+
+      <a href="#" class="news-card">
+        <div class="news-card-image" style="background:linear-gradient(135deg, #2d7a7a 0%, #4a9a8a 100%)"></div>
+        <div class="news-card-body">
+          <div class="news-card-meta">
+            <span class="news-card-tag">Research</span>
+            <span class="news-card-date">Mar 28, 2026</span>
+          </div>
+          <h3>The first AI-assisted drive on another planet</h3>
+          <p>Claude helped NASA's Perseverance rover travel four hundred meters autonomously on Mars.</p>
+          <div class="news-card-link">Read more <svg class="arrow-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+        </div>
+      </a>
+
+      <a href="#" class="news-card">
+        <div class="news-card-image" style="background:linear-gradient(135deg, #191918 0%, #333332 100%)"></div>
+        <div class="news-card-body">
+          <div class="news-card-meta">
+            <span class="news-card-tag">Alignment Science</span>
+            <span class="news-card-date">Mar 15, 2026</span>
+          </div>
+          <h3>Advances in interpretability research</h3>
+          <p>New techniques for understanding how language models represent and process information.</p>
+          <div class="news-card-link">Read more <svg class="arrow-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+        </div>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<!-- CLAUDE PRODUCT -->
+<section class="claude-section" id="claude">
+  <div class="container">
+    <div class="section-intro">
+      <p class="section-label" style="color:var(--coral)">Our Product</p>
+      <h2>Meet Claude</h2>
+      <p>Claude is a next-generation AI assistant built for work and trained to be safe, accurate, and secure. Whether you're summarizing documents, writing code, or thinking through complex problems, Claude is here to help.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <h3>Reasoning</h3>
+        <p>Claude thinks through complex problems step-by-step, showing its work and reasoning process.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Coding</h3>
+        <p>Write, debug, and refactor code across dozens of programming languages with deep understanding.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Analysis</h3>
+        <p>Process documents, data, and images to extract insights and answer nuanced questions.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Writing</h3>
+        <p>Create clear, well-structured content from technical documentation to creative prose.</p>
+      </div>
+    </div>
+    <div class="section-cta">
+      <a href="#" class="btn-primary btn-large">
+        Try Claude
+        <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- RESEARCH -->
+<section class="research-section" id="research">
+  <div class="container">
+    <div class="section-intro">
+      <p class="section-label" style="color:var(--teal)">Research</p>
+      <h2>Pioneering AI safety</h2>
+      <p>We conduct frontier research to build AI systems that are safe, beneficial, and understandable. Our work spans interpretability, alignment, and the societal impacts of AI.</p>
+    </div>
+    <div class="research-grid">
+      <a href="#" class="research-card">
+        <div class="research-bar" style="background:#2d7a7a"></div>
+        <div>
+          <h3>Interpretability</h3>
+          <p>Understanding what happens inside AI models — mapping the circuits and features that drive behavior.</p>
+        </div>
+      </a>
+      <a href="#" class="research-card">
+        <div class="research-bar" style="background:#c4704b"></div>
+        <div>
+          <h3>Alignment</h3>
+          <p>Ensuring AI systems reliably follow human intent and values, even as capabilities grow.</p>
+        </div>
+      </a>
+      <a href="#" class="research-card">
+        <div class="research-bar" style="background:#b8963e"></div>
+        <div>
+          <h3>Responsible Scaling</h3>
+          <p>A framework for safely developing increasingly capable AI systems with appropriate safeguards.</p>
+        </div>
+      </a>
+      <a href="#" class="research-card">
+        <div class="research-bar" style="background:#4a4a46"></div>
+        <div>
+          <h3>Societal Impacts</h3>
+          <p>Studying how AI affects economics, labor markets, and society to inform responsible deployment.</p>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- COMMITMENTS -->
+<section class="commitments-section" id="commitments">
+  <div class="container">
+    <div class="section-intro">
+      <p class="section-label" style="color:var(--gold)">Our Commitments</p>
+      <h2 style="color:#fff">Building AI responsibly</h2>
+      <p style="color:var(--text-muted)">We believe AI safety isn't just a research problem — it's a commitment to how we build, deploy, and govern AI systems.</p>
+    </div>
+    <div class="commitments-grid">
+      <div class="commitment-card">
+        <div class="commitment-num">01</div>
+        <h3>Safety First</h3>
+        <p>Every model we release undergoes rigorous safety testing. We develop and publish our Responsible Scaling Policy to guide decisions.</p>
+      </div>
+      <div class="commitment-card">
+        <div class="commitment-num">02</div>
+        <h3>Transparency</h3>
+        <p>We share our research openly, publish model cards and system prompts, and engage with policymakers and civil society.</p>
+      </div>
+      <div class="commitment-card">
+        <div class="commitment-num">03</div>
+        <h3>Broad Benefit</h3>
+        <p>We work to ensure AI benefits are widely shared, investing in education, economic research, and global access.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CAREERS -->
+<section class="careers-section" id="careers">
+  <div class="careers-card">
+    <div class="careers-content">
+      <p class="section-label" style="color:var(--coral)">Careers</p>
+      <h2>Help shape the future of AI</h2>
+      <p>We're a team of researchers, engineers, and policy experts working on one of the most important challenges of our time. Join us.</p>
+    </div>
+    <a href="#" class="btn-primary btn-large">
+      View open roles
+      <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4>Product</h4>
+        <ul><li><a href="#">Claude</a></li><li><a href="#">API</a></li><li><a href="#">Pricing</a></li><li><a href="#">Enterprise</a></li></ul>
+      </div>
+      <div class="footer-col">
+        <h4>Research</h4>
+        <ul><li><a href="#">Overview</a></li><li><a href="#">Interpretability</a></li><li><a href="#">Alignment</a></li><li><a href="#">Publications</a></li></ul>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <ul><li><a href="#">About</a></li><li><a href="#">Careers</a></li><li><a href="#">News</a></li><li><a href="#">Contact</a></li></ul>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <ul><li><a href="#">Privacy</a></li><li><a href="#">Terms</a></li><li><a href="#">Security</a></li><li><a href="#">Responsible Disclosure</a></li></ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-logo">
+        <svg viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="256" height="256" rx="60" fill="#191918"/>
+          <path d="M147.5 48L60 208h37.5L185 48h-37.5zM108 208l50-108h37.5L145.5 208H108z" fill="#faf9f6"/>
+        </svg>
+        <span>anthropic</span>
+      </div>
+      <p class="footer-copy">&copy; 2026 Anthropic PBC. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
