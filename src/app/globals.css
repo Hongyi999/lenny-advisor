@@ -1,6 +1,36 @@
 @import "tailwindcss";
 
 @theme {
+  /* Anthropic warm cream palette */
+  --color-cream: #faf9f6;
+  --color-cream-dark: #f0ede6;
+  --color-cream-darker: #e8e4db;
+
+  /* Anthropic brand tans/browns */
+  --color-tan-100: #f5f0e8;
+  --color-tan-200: #e8dfd2;
+  --color-tan-300: #d4c9b8;
+  --color-tan-400: #b8a992;
+  --color-tan-500: #9a8a72;
+  --color-tan-600: #7d6e58;
+
+  /* Text colors */
+  --color-text-primary: #191918;
+  --color-text-secondary: #4a4a46;
+  --color-text-tertiary: #6b6b66;
+  --color-text-muted: #9a9a94;
+
+  /* Anthropic dark theme accents */
+  --color-dark: #191918;
+  --color-dark-card: #232322;
+  --color-dark-border: #333332;
+
+  /* Anthropic accent - warm coral/terracotta */
+  --color-accent-coral: #c4704b;
+  --color-accent-teal: #2d7a7a;
+  --color-accent-gold: #b8963e;
+
+  /* Keeping original palette for components that may reference them */
   --color-warm-50: oklch(0.98 0.01 70);
   --color-warm-100: oklch(0.95 0.02 70);
   --color-warm-200: oklch(0.90 0.03 70);
@@ -34,9 +64,10 @@
   --color-accent-hover: oklch(0.58 0.15 42);
   --color-accent-light: oklch(0.92 0.04 50);
 
-  --font-sans: "Source Sans 3", "Source Sans Pro", system-ui, -apple-system, sans-serif;
-  --font-serif: "Source Serif 4", "Source Serif Pro", Georgia, "Times New Roman", serif;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-serif: "Times New Roman", Georgia, serif;
   --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+  --font-display: "Styrene A", "Inter", system-ui, sans-serif;
 }
 
 html {
@@ -44,18 +75,18 @@ html {
 }
 
 body {
-  color: var(--color-sand-900);
-  background-color: var(--color-sand-50);
+  color: var(--color-text-primary);
+  background-color: var(--color-cream);
 }
 
 ::selection {
-  background-color: var(--color-accent-light);
-  color: var(--color-sand-900);
+  background-color: var(--color-tan-200);
+  color: var(--color-text-primary);
 }
 
 input:focus,
 textarea:focus,
 button:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-text-primary);
   outline-offset: 2px;
 }
