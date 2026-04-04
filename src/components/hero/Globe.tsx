@@ -30,13 +30,23 @@ function normalizeAngle(a: number): number {
  * FIXED screen position: slightly left-of-center horizontally,
  * lower-center vertically — matching Anthropic's globe behavior
  * where highlighted areas always land at the same spot.
- *
- * We offset lng by a fixed amount so the dot appears ~15° left of
- * dead-center, placing it above the text card area.
  */
 const LNG_OFFSET = 10; // degrees — shift guest slightly left of center
 function lngToRotY(lng: number): number {
   return Math.PI / 2 - ((lng + LNG_OFFSET + 180) * Math.PI) / 180;
+}
+
+/**
+ * Compute a target X rotation (tilt) so the guest's latitude
+ * appears at a consistent vertical screen position.
+ * We also add slight random variation for visual variety.
+ */
+function latToRotX(lat: number): number {
+  // Base tilt: bring the guest's latitude toward screen center
+  // Positive lat (northern) → tilt globe forward (negative X rot)
+  // Negative lat (southern) → tilt globe backward (positive X rot)
+  const baseTilt = -(lat * Math.PI) / 180 * 0.35;
+  return baseTilt;
 }
 
 /* ── Clean grid: 36 meridians + 17 parallels ──────────── */
@@ -45,6 +55,7 @@ function CleanGrid({ r }: { r: number }) {
   const objs = useMemo(() => {
     const segs = 72;
     const mat = new THREE.LineBasicMaterial({ color: "#000000", transparent: true, opacity: 0.05, depthWrite: false });
+    const eqMat = new THREE.LineBasicMaterial({ color: "#000000", transparent: true, opacity: 0.18, depthWrite: false });
     const lines: THREE.Line[] = [];
 
     for (let lat = -80; lat <= 80; lat += 10) {
@@ -55,7 +66,7 @@ function CleanGrid({ r }: { r: number }) {
       }
       const g = new THREE.BufferGeometry();
       g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-      lines.push(new THREE.Line(g, mat));
+      lines.push(new THREE.Line(g, lat === 0 ? eqMat : mat));
     }
     for (let lng = -180; lng < 180; lng += 10) {
       const pos = new Float32Array((segs + 1) * 3);
@@ -169,15 +180,21 @@ function ActiveHighlight({ position }: { position: THREE.Vector3 }) {
 function RotatingScene({ children, activeIdx }: { children: React.ReactNode; activeIdx: number }) {
   const groupRef = useRef<THREE.Group>(null);
   const currentY = useRef(0);
+  const currentX = useRef(0);
   const targetY = useRef<number | null>(null);
+  const targetX = useRef<number | null>(null);
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isIdle = useRef(true);
 
   useEffect(() => {
     if (activeIdx < 0 || activeIdx >= GUESTS.length) return;
-    const desired = lngToRotY(GUESTS[activeIdx].lng);
-    const diff = normalizeAngle(desired - currentY.current);
-    targetY.current = currentY.current + diff;
+    const guest = GUESTS[activeIdx];
+    // Y rotation (longitude)
+    const desiredY = lngToRotY(guest.lng);
+    const diffY = normalizeAngle(desiredY - currentY.current);
+    targetY.current = currentY.current + diffY;
+    // X rotation (latitude tilt) — varies per guest for visual variety
+    targetX.current = latToRotX(guest.lat);
     isIdle.current = false;
     if (idleTimer.current) clearTimeout(idleTimer.current);
     idleTimer.current = setTimeout(() => { isIdle.current = true; }, 5500);
@@ -186,6 +203,7 @@ function RotatingScene({ children, activeIdx }: { children: React.ReactNode; act
 
   useFrame((_, dt) => {
     if (!groupRef.current) return;
+    // Y-axis rotation (longitude)
     if (targetY.current !== null) {
       const rem = targetY.current - currentY.current;
       if (Math.abs(rem) < 0.002) { currentY.current = targetY.current; targetY.current = null; }
@@ -193,7 +211,17 @@ function RotatingScene({ children, activeIdx }: { children: React.ReactNode; act
     } else if (isIdle.current) {
       currentY.current += dt * 0.08;
     }
+    // X-axis rotation (latitude tilt)
+    if (targetX.current !== null) {
+      const remX = targetX.current - currentX.current;
+      if (Math.abs(remX) < 0.002) { currentX.current = targetX.current; targetX.current = null; }
+      else currentX.current += remX * Math.min(dt * 2.0, 0.05);
+    } else if (isIdle.current) {
+      // Slowly return to neutral tilt when idle
+      currentX.current += (0 - currentX.current) * Math.min(dt * 0.5, 0.02);
+    }
     groupRef.current.rotation.y = currentY.current;
+    groupRef.current.rotation.x = currentX.current;
   });
 
   return <group ref={groupRef}>{children}</group>;

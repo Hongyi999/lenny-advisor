@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import dynamic from "next/dynamic";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import Navbar from "@/components/hero/Navbar";
 import SearchBar from "@/components/hero/SearchBar";
 import GuestCard from "@/components/hero/GuestCard";
@@ -20,6 +20,14 @@ const Globe = dynamic(() => import("@/components/hero/Globe"), {
 export default function HomePage() {
   const [activeGuest, setActiveGuest] = useState<GuestData | null>(null);
   const handleGuestChange = useCallback((guest: GuestData) => { setActiveGuest(guest); }, []);
+
+  const globeSectionRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: globeSectionRef,
+    offset: ["start end", "center center"],
+  });
+  // Scale from 0.88 → 1.0 as globe scrolls into view
+  const globeScale = useTransform(scrollYProgress, [0, 1], [0.88, 1.0]);
 
   return (
     <div className="min-h-screen bg-[#f5f0e8]">
@@ -46,21 +54,22 @@ export default function HomePage() {
       </section>
 
       {/* ─── Globe + Floating Guest Card ─── */}
-      <section className="relative">
-        {/* Globe canvas */}
+      <section ref={globeSectionRef} className="relative">
+        {/* Globe canvas with scroll-based zoom */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
-          className="w-full h-[55vh] sm:h-[60vh] md:h-[65vh] lg:h-[70vh] max-h-[760px]"
+          style={{ scale: globeScale }}
+          className="w-full h-[55vh] sm:h-[60vh] md:h-[65vh] lg:h-[70vh] max-h-[760px] origin-center"
         >
           <Globe onGuestChange={handleGuestChange} />
         </motion.div>
 
-        {/* Guest card overlay - positioned over lower part of globe */}
+        {/* Guest card overlay - compact gradient so globe is more visible */}
         <div className="absolute inset-x-0 bottom-0 z-10 pointer-events-none">
-          {/* Gradient fade: transparent → page bg */}
-          <div className="h-40 sm:h-52" style={{ background: "linear-gradient(to bottom, transparent 0%, #f5f0e8 80%)" }} />
+          {/* Gradient fade: transparent → page bg (shorter) */}
+          <div className="h-24 sm:h-32" style={{ background: "linear-gradient(to bottom, transparent 0%, #f5f0e8 85%)" }} />
           <div className="bg-[#f5f0e8] pointer-events-auto pb-4">
             <GuestCard guest={activeGuest} />
           </div>
