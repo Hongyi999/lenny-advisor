@@ -210,7 +210,10 @@ function RotatingScene({
     if (activeIdx < 0 || activeIdx >= GUESTS.length) return;
 
     const g = GUESTS[activeIdx];
-    targetY.current = lngToRotY(g.lng);
+    // Compute target RELATIVE to current position (avoids wrap-around jump)
+    const desiredY = lngToRotY(g.lng);
+    const diff = normalizeAngle(desiredY - currentY.current);
+    targetY.current = currentY.current + diff;
     isIdle.current = false;
 
     // After settling, resume idle rotation
@@ -228,13 +231,13 @@ function RotatingScene({
     if (!groupRef.current) return;
 
     if (targetY.current !== null) {
-      const diff = normalizeAngle(targetY.current - currentY.current);
-      if (Math.abs(diff) < 0.003) {
+      const remaining = targetY.current - currentY.current;
+      if (Math.abs(remaining) < 0.003) {
         currentY.current = targetY.current;
         targetY.current = null;
       } else {
-        // Smooth ease toward target
-        currentY.current += diff * Math.min(dt * 2.5, 0.06);
+        // Smooth ease toward target (no normalizeAngle needed — target is already nearby)
+        currentY.current += remaining * Math.min(dt * 2.5, 0.06);
       }
     } else if (isIdle.current) {
       // Slow auto-rotation ~60s/rev
