@@ -52,6 +52,7 @@ export default function SearchBar() {
           <input
             ref={inputRef}
             type="text"
+            aria-label="Ask a question"
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onFocus={() => setFocused(true)}
@@ -81,6 +82,7 @@ export default function SearchBar() {
         <button
           onClick={submit}
           disabled={!value.trim()}
+          aria-label="Search"
           className={`
             w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all
             ${value.trim()

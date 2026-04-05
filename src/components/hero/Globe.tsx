@@ -46,7 +46,7 @@ function latToRotX(lat: number): number {
 /* ── Circular dot texture (shared) ─────────────────────── */
 
 function useCircleTexture() {
-  return useMemo(() => {
+  const texture = useMemo(() => {
     const canvas = document.createElement("canvas");
     canvas.width = 64;
     canvas.height = 64;
@@ -57,6 +57,10 @@ function useCircleTexture() {
     ctx.fill();
     return new THREE.CanvasTexture(canvas);
   }, []);
+  useEffect(() => {
+    return () => { texture.dispose(); };
+  }, [texture]);
+  return texture;
 }
 
 /* ── Grid: meridians + parallels + prominent equator ──── */
@@ -91,6 +95,15 @@ function CleanGrid({ r }: { r: number }) {
     return lines;
   }, [r]);
 
+  useEffect(() => {
+    return () => {
+      for (const line of objs) {
+        line.geometry.dispose();
+        (line.material as THREE.Material).dispose();
+      }
+    };
+  }, [objs]);
+
   return <group>{objs.map((o, i) => <primitive key={i} object={o} />)}</group>;
 }
 
@@ -111,6 +124,15 @@ function ContinentOutlines({ r }: { r: number }) {
     });
   }, [r]);
 
+  useEffect(() => {
+    return () => {
+      for (const loop of objs) {
+        loop.geometry.dispose();
+        (loop.material as THREE.Material).dispose();
+      }
+    };
+  }, [objs]);
+
   return <group>{objs.map((o, i) => <primitive key={i} object={o} />)}</group>;
 }
 
@@ -127,6 +149,10 @@ function ContinentCloud({ r }: { r: number }) {
     g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
     return g;
   }, [r]);
+
+  useEffect(() => {
+    return () => { geo.dispose(); };
+  }, [geo]);
 
   return (
     <points geometry={geo}>
@@ -194,6 +220,16 @@ function ContinentHighlight({ r, activeIdx }: { r: number; activeIdx: number }) 
     return { outlineObj: outline, fillGeo: shapeGeo };
   }, [activeIdx, r]);
 
+  useEffect(() => {
+    return () => {
+      if (outlineObj) {
+        outlineObj.geometry.dispose();
+        (outlineObj.material as THREE.Material).dispose();
+      }
+      fillGeo?.dispose();
+    };
+  }, [outlineObj, fillGeo]);
+
   if (!outlineObj || !fillGeo) return null;
 
   return (
@@ -220,6 +256,10 @@ function GuestMarkers({ r, activeIdx }: { r: number; activeIdx: number }) {
     g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
     return g;
   }, [r]);
+
+  useEffect(() => {
+    return () => { geo.dispose(); };
+  }, [geo]);
 
   const activePos = useMemo(() => {
     if (activeIdx < 0 || activeIdx >= GUESTS.length) return null;
@@ -315,7 +355,7 @@ function RotatingScene({ children, activeIdx }: { children: React.ReactNode; act
 
 /* ── Scene + Export ────────────────────────────────────── */
 
-interface GlobeProps { onGuestChange?: (guest: GuestData, index: number) => void; }
+interface GlobeProps { onGuestChange?: (guest: GuestData, index?: number) => void; }
 
 function Scene({ onGuestChange }: GlobeProps) {
   const [activeIdx, setActiveIdx] = useState(-1);

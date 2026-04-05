@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import type { GuestData } from "@/data/guests";
 
@@ -42,33 +43,57 @@ export default function GuestCard({ guest }: { guest: GuestData | null }) {
                   transition={{ duration: 0.8, ease: "easeOut" }}
                   className="mx-auto mb-3 max-w-[340px] sm:max-w-[380px]"
                 >
-                  <a
-                    href={ytUrl ?? "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block relative rounded-xl overflow-hidden group"
-                  >
-                    <div className="aspect-video bg-[#e8e0d0]">
-                      <img
-                        src={guest.thumbnail}
-                        alt={guest.guest}
-                        className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
-                        loading="eager"
-                      />
-                    </div>
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
-                        <svg viewBox="0 0 24 24" className="w-5 h-5 text-white ml-0.5" fill="currentColor">
-                          <path d="M8 5v14l11-7z" />
-                        </svg>
+                  {ytUrl ? (
+                    <a
+                      href={ytUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block relative rounded-xl overflow-hidden group"
+                    >
+                      <div className="aspect-video bg-[#e8e0d0]">
+                        <Image
+                          src={guest.thumbnail}
+                          alt={guest.guest}
+                          width={480}
+                          height={270}
+                          sizes="(max-width: 640px) 340px, 380px"
+                          className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                          priority
+                        />
+                      </div>
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
+                          <svg viewBox="0 0 24 24" className="w-5 h-5 text-white ml-0.5" fill="currentColor">
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
+                        </div>
+                      </div>
+                      <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/30 to-transparent" />
+                      <div className="absolute bottom-1.5 left-2.5 right-2.5 flex items-center gap-1.5">
+                        <span className="text-white text-[11px] font-medium truncate">{guest.guest}</span>
+                        <span className="text-white/50 text-[11px]">· Lenny&apos;s Podcast</span>
+                      </div>
+                    </a>
+                  ) : (
+                    <div className="block relative rounded-xl overflow-hidden">
+                      <div className="aspect-video bg-[#e8e0d0]">
+                        <Image
+                          src={guest.thumbnail}
+                          alt={guest.guest}
+                          width={480}
+                          height={270}
+                          sizes="(max-width: 640px) 340px, 380px"
+                          className="w-full h-full object-cover"
+                          priority
+                        />
+                      </div>
+                      <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/30 to-transparent" />
+                      <div className="absolute bottom-1.5 left-2.5 right-2.5 flex items-center gap-1.5">
+                        <span className="text-white text-[11px] font-medium truncate">{guest.guest}</span>
+                        <span className="text-white/50 text-[11px]">· Lenny&apos;s Podcast</span>
                       </div>
                     </div>
-                    <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/30 to-transparent" />
-                    <div className="absolute bottom-1.5 left-2.5 right-2.5 flex items-center gap-1.5">
-                      <span className="text-white text-[11px] font-medium truncate">{guest.guest}</span>
-                      <span className="text-white/50 text-[11px]">· Lenny&apos;s Podcast</span>
-                    </div>
-                  </a>
+                  )}
                 </motion.div>
               )}
 

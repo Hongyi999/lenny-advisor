@@ -86,7 +86,7 @@ export default function HomePage() {
             <Globe onGuestChange={handleGuestChange} />
           </motion.div>
 
-          {/* Vertical gradient ABOVE the card area — fades into bg */}
+          {/* z-10: gradient + solid fill sit above canvas, below text content */}
           <div
             className="absolute inset-x-0 z-10 pointer-events-none"
             style={{
@@ -102,7 +102,7 @@ export default function HomePage() {
             style={{ top: "66%" }}
           />
 
-          {/* Guest card — positioned so thumbnail/name stay fixed, text can extend down */}
+          {/* z-20: interactive content (title, card) sits above gradient overlays */}
           <div className="absolute inset-x-0 z-20 pointer-events-none" style={{ top: "60%" }}>
             <div className="relative pointer-events-auto pb-10">
               <GuestCard guest={activeGuest} />
