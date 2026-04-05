@@ -28,12 +28,12 @@ export default function HomePage() {
   });
 
   // clip-path: inset() — GPU-composited, zero reflow, zero jitter
-  // Start at 22% inset for smaller initial size → dramatic expansion
-  const clipInset = useTransform(scrollYProgress, [0, 0.5], [22, 0]);
-  const clipRadius = useTransform(scrollYProgress, [0, 0.5], [28, 0]);
+  // Start at 30% inset for smaller initial size → dramatic expansion
+  const clipInset = useTransform(scrollYProgress, [0, 0.5], [30, 0]);
+  const clipRadius = useTransform(scrollYProgress, [0, 0.5], [40, 0]);
   const clipPath = useTransform(
     [clipInset, clipRadius],
-    ([inset, radius]: number[]) => `inset(0 ${inset}% round ${radius}px)`
+    ([inset, radius]: number[]) => `inset(${inset * 0.3}% ${inset}% ${inset * 0.15}% ${inset}% round ${radius}px)`
   );
 
   return (
@@ -86,12 +86,12 @@ export default function HomePage() {
             <Globe onGuestChange={handleGuestChange} />
           </motion.div>
 
-          {/* z-10: gradient + solid fill sit above canvas, below text content */}
+          {/* z-10: gradient + solid fill — only covers card area, not the globe */}
           <div
             className="absolute inset-x-0 z-10 pointer-events-none"
             style={{
-              top: "52%",
-              height: "14%",
+              top: "62%",
+              height: "10%",
               background: "linear-gradient(to bottom, transparent 0%, #e8e3d9 100%)",
             }}
           />
@@ -99,12 +99,12 @@ export default function HomePage() {
           {/* Solid bg behind card */}
           <div
             className="absolute inset-x-0 bottom-0 z-10 pointer-events-none bg-[#e8e3d9]"
-            style={{ top: "66%" }}
+            style={{ top: "72%" }}
           />
 
           {/* z-20: interactive content (title, card) sits above gradient overlays */}
-          <div className="absolute inset-x-0 z-20 pointer-events-none" style={{ top: "60%" }}>
-            <div className="relative pointer-events-auto pb-10">
+          <div className="absolute inset-x-0 z-20 pointer-events-none" style={{ top: "68%" }}>
+            <div className="relative pointer-events-auto pb-16">
               <GuestCard guest={activeGuest} />
             </div>
           </div>
