@@ -27,16 +27,14 @@ export default function HomePage() {
     offset: ["start end", "center center"],
   });
 
-  // clip-path: inset() — purely GPU-composited, zero layout reflow, zero jitter
-  const clipInset = useTransform(scrollYProgress, [0, 0.5], [18, 0]);
+  // clip-path: inset() — GPU-composited, zero reflow, zero jitter
+  // Start at 22% inset for smaller initial size → dramatic expansion
+  const clipInset = useTransform(scrollYProgress, [0, 0.5], [22, 0]);
   const clipRadius = useTransform(scrollYProgress, [0, 0.5], [28, 0]);
   const clipPath = useTransform(
     [clipInset, clipRadius],
     ([inset, radius]: number[]) => `inset(0 ${inset}% round ${radius}px)`
   );
-
-  // Globe scales up as user scrolls — starts smaller for dramatic effect
-  const globeScale = useTransform(scrollYProgress, [0, 0.5], [0.78, 1]);
 
   return (
     <div className="min-h-screen bg-[#f5f0e8]">
@@ -62,13 +60,13 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* ─── Globe Section: clip-path expanding + scale ─── */}
+      {/* ─── Globe Section: clip-path expanding from center ─── */}
       <section ref={globeSectionRef} className="relative mt-2">
         <motion.div
           style={{ clipPath }}
           className="relative bg-[#e8e3d9]"
         >
-          {/* Large serif title floating on upper globe */}
+          {/* Large serif title */}
           <div className="absolute top-[5%] sm:top-[7%] inset-x-0 text-center z-20 pointer-events-none px-6">
             <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif text-[#1a1a1a] leading-tight max-w-3xl mx-auto">
               Where the world&apos;s best<br />share what they know
@@ -78,25 +76,35 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Globe canvas — scales up on scroll */}
+          {/* Globe canvas */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.4 }}
-            style={{ scale: globeScale }}
-            className="w-full h-[85vh] sm:h-[90vh] max-h-[960px] origin-center"
+            className="w-full h-[85vh] sm:h-[90vh] max-h-[960px]"
           >
             <Globe onGuestChange={handleGuestChange} />
           </motion.div>
 
-          {/* Guest card — centered with local gradient backdrop */}
-          <div className="absolute top-[58%] inset-x-0 z-20 pointer-events-none pb-8">
-            {/* Radial gradient behind card for readability */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{ background: "radial-gradient(ellipse 80% 100% at 50% 40%, #e8e3d9 0%, #e8e3d9ee 40%, transparent 80%)" }}
-            />
-            <div className="relative pointer-events-auto">
+          {/* Vertical gradient ABOVE the card area — fades into bg */}
+          <div
+            className="absolute inset-x-0 z-10 pointer-events-none"
+            style={{
+              top: "52%",
+              height: "14%",
+              background: "linear-gradient(to bottom, transparent 0%, #e8e3d9 100%)",
+            }}
+          />
+
+          {/* Solid bg behind card */}
+          <div
+            className="absolute inset-x-0 bottom-0 z-10 pointer-events-none bg-[#e8e3d9]"
+            style={{ top: "66%" }}
+          />
+
+          {/* Guest card — positioned so thumbnail/name stay fixed, text can extend down */}
+          <div className="absolute inset-x-0 z-20 pointer-events-none" style={{ top: "60%" }}>
+            <div className="relative pointer-events-auto pb-10">
               <GuestCard guest={activeGuest} />
             </div>
           </div>

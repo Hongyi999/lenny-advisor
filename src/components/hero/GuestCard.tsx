@@ -31,12 +31,17 @@ export default function GuestCard({ guest }: { guest: GuestData | null }) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
+              transition={{ duration: 0.6, ease: "easeInOut" }}
               className="text-center"
             >
-              {/* YouTube Thumbnail — flat, no shadow */}
+              {/* YouTube Thumbnail — smooth fade, flat, no shadow */}
               {guest.thumbnail && (
-                <div className="mx-auto mb-3 max-w-[340px] sm:max-w-[380px]">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.8, ease: "easeOut" }}
+                  className="mx-auto mb-3 max-w-[340px] sm:max-w-[380px]"
+                >
                   <a
                     href={ytUrl ?? "#"}
                     target="_blank"
@@ -64,7 +69,7 @@ export default function GuestCard({ guest }: { guest: GuestData | null }) {
                       <span className="text-white/50 text-[11px]">· Lenny&apos;s Podcast</span>
                     </div>
                   </a>
-                </div>
+                </motion.div>
               )}
 
               {/* Guest name badge */}
@@ -74,8 +79,8 @@ export default function GuestCard({ guest }: { guest: GuestData | null }) {
                 </span>
               </div>
 
-              {/* Quote — forced single line with ellipsis truncation */}
-              <p className="text-[#1a1a1a] text-base sm:text-lg font-serif italic leading-normal px-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-xl mx-auto">
+              {/* Quote — full text, wraps naturally, extra lines extend downward */}
+              <p className="text-[#1a1a1a] text-base sm:text-lg font-serif italic leading-relaxed px-6 sm:px-8">
                 &ldquo;{displayed}
                 {!done && <span className="inline-block w-0.5 h-4 bg-[#d4a853] ml-0.5 align-text-bottom animate-pulse" />}
                 {done && <>&rdquo;</>}

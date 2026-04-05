@@ -114,10 +114,9 @@ function ContinentOutlines({ r }: { r: number }) {
   return <group>{objs.map((o, i) => <primitive key={i} object={o} />)}</group>;
 }
 
-/* ── Continent dot cloud (circular dots) ────────────── */
+/* ── Continent dot cloud ────────────────────────────── */
 
 function ContinentCloud({ r }: { r: number }) {
-  const circleMap = useCircleTexture();
   const geo = useMemo(() => {
     const pos = new Float32Array(CONTINENT_DOTS.length * 3);
     for (let i = 0; i < CONTINENT_DOTS.length; i++) {
@@ -131,7 +130,7 @@ function ContinentCloud({ r }: { r: number }) {
 
   return (
     <points geometry={geo}>
-      <pointsMaterial color="#000000" size={0.018} map={circleMap} transparent opacity={0.35} sizeAttenuation depthWrite={false} alphaTest={0.4} />
+      <pointsMaterial color="#000000" size={0.018} transparent opacity={0.35} sizeAttenuation depthWrite={false} />
     </points>
   );
 }
