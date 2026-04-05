@@ -94,7 +94,7 @@ export default function SearchBar() {
       </motion.div>
 
       <p className="text-center text-xs text-[#aaa] mt-3">
-        Powered by 300+ episodes &middot; Answers include YouTube timestamps
+        Your expert brain trust &middot; Answers with timestamps &middot; Build your knowledge base
       </p>
     </div>
   );

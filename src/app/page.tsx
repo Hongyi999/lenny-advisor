@@ -27,8 +27,9 @@ export default function HomePage() {
     offset: ["start end", "center center"],
   });
 
-  // Use width percentage (NOT scale) to avoid transform-origin position jumps
-  const containerWidth = useTransform(scrollYProgress, [0, 0.5], ["65%", "100%"]);
+  // Symmetric padding — container is always 100% wide, padding shrinks content
+  // This avoids width+mx-auto reflow jitter entirely
+  const sidePad = useTransform(scrollYProgress, [0, 0.5], ["20%", "0%"]);
   const borderRadius = useTransform(scrollYProgress, [0, 0.5], [28, 0]);
 
   return (
@@ -41,13 +42,13 @@ export default function HomePage() {
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-serif leading-[1.1] tracking-tight text-[#1a1a1a] max-w-4xl mx-auto mb-6">
             Ask anything. Get{" "}
             <span className="text-[#d4a853] relative inline-block">
-              podcast-proven
+              world-class
               <span className="absolute left-0 right-0 bottom-0 h-[2px] bg-[#d4a853]/30 rounded-full" />
             </span>{" "}
-            wisdom.
+            answers.
           </h1>
           <p className="text-base sm:text-lg text-[#6b6b6b] leading-relaxed max-w-xl mx-auto">
-            AI-powered answers grounded in 300+ episodes of Lenny&apos;s Podcast &mdash; with timestamps to the original moments.
+            AI-powered insights from 300+ expert conversations on Lenny&apos;s Podcast.
           </p>
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }} className="mt-8 sm:mt-10">
@@ -55,11 +56,11 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* ─── Globe Section: expanding gray container ─── */}
+      {/* ─── Globe Section: expanding container via symmetric padding ─── */}
       <section ref={globeSectionRef} className="relative mt-2">
         <motion.div
-          style={{ width: containerWidth, borderRadius }}
-          className="relative mx-auto bg-[#e8e3d9] overflow-hidden"
+          style={{ paddingLeft: sidePad, paddingRight: sidePad, borderRadius }}
+          className="relative bg-[#e8e3d9] overflow-hidden"
         >
           {/* Large serif title floating on upper globe — Anthropic style */}
           <div className="absolute top-[5%] sm:top-[7%] inset-x-0 text-center z-20 pointer-events-none px-6">
