@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Anthropic",
+  title: "Lenny Advisor",
   description:
-    "Anthropic is an AI safety company that builds reliable, interpretable, and steerable AI systems. Meet Claude, our helpful AI assistant.",
+    "AI-powered answers grounded in 300+ episodes of Lenny's Podcast. Ask anything about product, growth, career, and leadership.",
 };
 
 export default function RootLayout({
@@ -16,11 +16,11 @@ export default function RootLayout({
     <html lang="en" className="h-full antialiased">
       <head>
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap"
+          href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Instrument+Serif&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-full flex flex-col bg-[#faf9f6] text-[#191918] font-sans">
+      <body className="min-h-full flex flex-col bg-[#f5f0e8] text-[#1a1a1a] font-sans antialiased">
         {children}
       </body>
     </html>
