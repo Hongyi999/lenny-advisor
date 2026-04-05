@@ -4,8 +4,8 @@
  * Also exports continent outline polylines for wireframe overlay.
  */
 
-// Ray-casting point-in-polygon
-function pip(testLat: number, testLng: number, poly: [number, number][]): boolean {
+// Ray-casting point-in-polygon (exported for continent highlight)
+export function pip(testLat: number, testLng: number, poly: [number, number][]): boolean {
   let inside = false;
   for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
     const latI = poly[i][0], lngI = poly[i][1];

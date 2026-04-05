@@ -24,20 +24,20 @@ export default function HomePage() {
   const globeSectionRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: globeSectionRef,
-    offset: ["start end", "end start"],
+    offset: ["start end", "center center"],
   });
 
-  // Anthropic-style: gray bg container scales from 90% to 100% width
-  // and border-radius shrinks from rounded to square
-  const containerScale = useTransform(scrollYProgress, [0, 0.4, 0.7], [0.88, 1.0, 1.0]);
-  const borderRadius = useTransform(scrollYProgress, [0, 0.4, 0.7], [32, 0, 0]);
+  // Gray container: starts narrow (75%) with rounded corners,
+  // expands to 100% (fills screen) as you scroll — like Anthropic
+  const containerScale = useTransform(scrollYProgress, [0, 0.6], [0.75, 1.0]);
+  const borderRadius = useTransform(scrollYProgress, [0, 0.6], [28, 0]);
 
   return (
     <div className="min-h-screen bg-[#f5f0e8]">
       <Navbar />
 
       {/* ─── Title + Search ─── */}
-      <section className="pt-28 sm:pt-36 pb-6 sm:pb-8 px-6 text-center">
+      <section className="pt-28 sm:pt-36 pb-4 sm:pb-6 px-6 text-center">
         <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: "easeOut" }}>
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-serif leading-[1.1] tracking-tight text-[#1a1a1a] max-w-4xl mx-auto mb-6">
             Ask anything. Get{" "}
@@ -56,37 +56,38 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* ─── Globe Section with Anthropic-style expanding gray background ─── */}
-      <section ref={globeSectionRef} className="relative mt-4 overflow-hidden">
+      {/* ─── Globe Section: Anthropic-style expanding gray container ─── */}
+      <section ref={globeSectionRef} className="relative mt-2">
         <motion.div
-          style={{
-            scale: containerScale,
-            borderRadius,
-          }}
-          className="relative mx-auto bg-[#e8e3da] origin-center"
+          style={{ scale: containerScale, borderRadius }}
+          className="relative mx-auto bg-[#e8e3d9] origin-top overflow-hidden"
         >
-          {/* Globe canvas — centered, no camera Y offset */}
+          {/* Floating text on upper portion of globe */}
+          <div className="absolute top-[6%] sm:top-[8%] inset-x-0 text-center z-20 pointer-events-none">
+            <p className="text-sm sm:text-base text-[#1a1a1a]/40 tracking-wide uppercase font-medium">
+              302 guests &middot; 50+ countries &middot; 300+ episodes
+            </p>
+          </div>
+
+          {/* Globe canvas — camera centered at (0,0), big globe */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
-            className="w-full h-[60vh] sm:h-[65vh] md:h-[70vh] lg:h-[75vh] max-h-[800px]"
+            transition={{ duration: 1, delay: 0.4 }}
+            className="w-full h-[85vh] sm:h-[90vh] max-h-[960px]"
           >
             <Globe onGuestChange={handleGuestChange} />
           </motion.div>
 
-          {/* Guest card — inside the gray container, minimal overlay */}
-          <div className="relative z-10">
-            {/* Tiny gradient transition from globe to card area */}
-            <div className="h-8 sm:h-12 -mt-8 sm:-mt-12 relative z-10" style={{ background: "linear-gradient(to bottom, transparent, #e8e3da)" }} />
-            <div className="bg-[#e8e3da] pb-8 sm:pb-10">
+          {/* Guest card: floats at bottom of globe container */}
+          <div className="absolute bottom-[3%] sm:bottom-[4%] inset-x-0 z-20 pointer-events-none">
+            <div className="pointer-events-auto">
               <GuestCard guest={activeGuest} />
             </div>
           </div>
         </motion.div>
       </section>
 
-      {/* Bottom spacer */}
       <div className="h-16" />
     </div>
   );
