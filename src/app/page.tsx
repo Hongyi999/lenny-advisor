@@ -27,10 +27,14 @@ export default function HomePage() {
     offset: ["start end", "center center"],
   });
 
-  // Symmetric padding — container is always 100% wide, padding shrinks content
-  // This avoids width+mx-auto reflow jitter entirely
-  const sidePad = useTransform(scrollYProgress, [0, 0.5], ["20%", "0%"]);
-  const borderRadius = useTransform(scrollYProgress, [0, 0.5], [28, 0]);
+  // clip-path: inset() — purely GPU-composited, zero layout reflow, zero jitter
+  // Visually clips the full-width container from both sides to create the "expanding" effect
+  const clipInset = useTransform(scrollYProgress, [0, 0.5], [18, 0]);
+  const clipRadius = useTransform(scrollYProgress, [0, 0.5], [28, 0]);
+  const clipPath = useTransform(
+    [clipInset, clipRadius],
+    ([inset, radius]: number[]) => `inset(0 ${inset}% round ${radius}px)`
+  );
 
   return (
     <div className="min-h-screen bg-[#f5f0e8]">
@@ -56,13 +60,13 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* ─── Globe Section: expanding container via symmetric padding ─── */}
+      {/* ─── Globe Section: clip-path expanding container ─── */}
       <section ref={globeSectionRef} className="relative mt-2">
         <motion.div
-          style={{ paddingLeft: sidePad, paddingRight: sidePad, borderRadius }}
+          style={{ clipPath }}
           className="relative bg-[#e8e3d9] overflow-hidden"
         >
-          {/* Large serif title floating on upper globe — Anthropic style */}
+          {/* Large serif title floating on upper globe */}
           <div className="absolute top-[5%] sm:top-[7%] inset-x-0 text-center z-20 pointer-events-none px-6">
             <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif text-[#1a1a1a] leading-tight max-w-3xl mx-auto">
               Where the world&apos;s best<br />share what they know
@@ -82,14 +86,14 @@ export default function HomePage() {
             <Globe onGuestChange={handleGuestChange} />
           </motion.div>
 
-          {/* Gradient backdrop for card readability */}
+          {/* Gradient backdrop for card readability — taller to cover thumbnail */}
           <div
-            className="absolute bottom-0 inset-x-0 h-[30%] z-10 pointer-events-none"
-            style={{ background: "linear-gradient(to bottom, transparent 0%, #e8e3d9 70%)" }}
+            className="absolute bottom-0 inset-x-0 h-[45%] z-10 pointer-events-none"
+            style={{ background: "linear-gradient(to bottom, transparent 0%, #e8e3d9 60%)" }}
           />
 
-          {/* Guest card floating at bottom */}
-          <div className="absolute bottom-[3%] sm:bottom-[4%] inset-x-0 z-20 pointer-events-none">
+          {/* Guest card — anchored from top so extra text lines extend downward */}
+          <div className="absolute top-[62%] inset-x-0 z-20 pointer-events-none">
             <div className="pointer-events-auto">
               <GuestCard guest={activeGuest} />
             </div>

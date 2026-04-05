@@ -23,7 +23,7 @@ export default function GuestCard({ guest }: { guest: GuestData | null }) {
 
   return (
     <div className="flex justify-center">
-      <div className="w-full max-w-2xl min-h-[180px]">
+      <div className="w-full max-w-2xl">
         <AnimatePresence mode="wait">
           {guest && (
             <motion.div
@@ -34,7 +34,7 @@ export default function GuestCard({ guest }: { guest: GuestData | null }) {
               transition={{ duration: 0.5, ease: "easeOut" }}
               className="text-center"
             >
-              {/* YouTube Thumbnail — larger */}
+              {/* YouTube Thumbnail — flat, no shadow, with gradient backdrop */}
               {guest.thumbnail && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.96 }}
@@ -42,33 +42,36 @@ export default function GuestCard({ guest }: { guest: GuestData | null }) {
                   transition={{ duration: 0.6, ease: "easeOut" }}
                   className="mx-auto mb-4 max-w-[360px] sm:max-w-[400px]"
                 >
-                  <a
-                    href={ytUrl ?? "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block relative rounded-xl overflow-hidden shadow-lg shadow-black/[0.1] hover:shadow-xl transition-shadow group"
-                  >
-                    <div className="aspect-video bg-[#e8e0d0]">
-                      <img
-                        src={guest.thumbnail}
-                        alt={guest.guest}
-                        className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
-                        loading="eager"
-                      />
-                    </div>
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
-                        <svg viewBox="0 0 24 24" className="w-5 h-5 text-white ml-0.5" fill="currentColor">
-                          <path d="M8 5v14l11-7z" />
-                        </svg>
+                  {/* Gradient backdrop matching parent bg */}
+                  <div className="relative rounded-xl overflow-hidden" style={{ background: "linear-gradient(to bottom, transparent, #e8e3d9 80%)" }}>
+                    <a
+                      href={ytUrl ?? "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block relative rounded-xl overflow-hidden group"
+                    >
+                      <div className="aspect-video bg-[#e8e0d0]">
+                        <img
+                          src={guest.thumbnail}
+                          alt={guest.guest}
+                          className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                          loading="eager"
+                        />
                       </div>
-                    </div>
-                    <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/30 to-transparent" />
-                    <div className="absolute bottom-1.5 left-2.5 right-2.5 flex items-center gap-1.5">
-                      <span className="text-white text-[11px] font-medium truncate">{guest.guest}</span>
-                      <span className="text-white/50 text-[11px]">· Lenny&apos;s Podcast</span>
-                    </div>
-                  </a>
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
+                          <svg viewBox="0 0 24 24" className="w-5 h-5 text-white ml-0.5" fill="currentColor">
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
+                        </div>
+                      </div>
+                      <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/30 to-transparent" />
+                      <div className="absolute bottom-1.5 left-2.5 right-2.5 flex items-center gap-1.5">
+                        <span className="text-white text-[11px] font-medium truncate">{guest.guest}</span>
+                        <span className="text-white/50 text-[11px]">· Lenny&apos;s Podcast</span>
+                      </div>
+                    </a>
+                  </div>
                 </motion.div>
               )}
 
@@ -79,7 +82,7 @@ export default function GuestCard({ guest }: { guest: GuestData | null }) {
                 </span>
               </div>
 
-              {/* Typewriter quote — larger */}
+              {/* Typewriter quote — text overflows downward naturally */}
               <p className="text-[#1a1a1a] text-lg sm:text-xl font-serif italic leading-relaxed px-4">
                 &ldquo;{displayed}
                 {!done && <span className="inline-block w-0.5 h-5 bg-[#d4a853] ml-0.5 align-text-bottom animate-pulse" />}

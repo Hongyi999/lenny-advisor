@@ -39,9 +39,10 @@ function lngToRotY(lng: number): number {
  * plus a small positive offset to push dot ABOVE center
  * (so it appears above the card below).
  */
-const LAT_OFFSET = 0.12; // radians — push dot above globe center
+const LAT_OFFSET = 0.10; // radians — push dot slightly above globe center
 function latToRotX(lat: number): number {
-  return -(lat * Math.PI) / 180 + LAT_OFFSET;
+  // Positive rotation tilts globe forward, bringing northern-hemisphere points down to center
+  return (lat * Math.PI) / 180 - LAT_OFFSET;
 }
 
 /* ── Grid: meridians + parallels + prominent equator ──── */
@@ -290,9 +291,8 @@ function RotatingScene({ children, activeIdx }: { children: React.ReactNode; act
       // Slowly drift back to slight upward tilt
       currentX.current += (LAT_OFFSET * 0.3 - currentX.current) * Math.min(dt * 0.3, 0.01);
     }
-    // YXZ order: first rotate Y (longitude), then X (latitude tilt)
-    // This matches our math: lngToRotY assumes Y applied first
-    groupRef.current.rotation.order = 'YXZ';
+    // Default 'XYZ' order: matrix = R_X * R_Y * R_Z
+    // Applied to points: first R_Y (longitude → front), then R_X (latitude tilt)
     groupRef.current.rotation.y = currentY.current;
     groupRef.current.rotation.x = currentX.current;
   });
