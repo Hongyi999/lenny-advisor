@@ -26,37 +26,34 @@ function normalizeAngle(a: number): number {
 }
 
 /**
- * Target rotation Y so that a guest at (lat, lng) appears at a
- * FIXED screen position: slightly left-of-center horizontally,
- * lower-center vertically — matching Anthropic's globe behavior
- * where highlighted areas always land at the same spot.
+ * Rotate Y so the guest longitude lands at SCREEN CENTER horizontally.
+ * LNG_OFFSET = 0 → dead center. This ensures the yellow dot
+ * is always directly above the card below.
  */
-const LNG_OFFSET = 10; // degrees — shift guest slightly left of center
+const LNG_OFFSET = 0;
 function lngToRotY(lng: number): number {
   return Math.PI / 2 - ((lng + LNG_OFFSET + 180) * Math.PI) / 180;
 }
 
 /**
- * Compute a target X rotation (tilt) so the guest's latitude
- * appears at a consistent vertical screen position.
- * We also add slight random variation for visual variety.
+ * Tilt globe on X-axis so the guest's latitude lands at a
+ * CONSISTENT vertical screen position. Factor ~0.9 means
+ * 90% of latitude offset is corrected, keeping all dots
+ * at nearly the same height on screen.
  */
 function latToRotX(lat: number): number {
-  // Base tilt: bring the guest's latitude toward screen center
-  // Positive lat (northern) → tilt globe forward (negative X rot)
-  // Negative lat (southern) → tilt globe backward (positive X rot)
-  // Stronger tilt factor so the difference is visually obvious
-  const baseTilt = -(lat * Math.PI) / 180 * 0.55;
-  return baseTilt;
+  return -(lat * Math.PI) / 180 * 0.9;
 }
 
-/* ── Clean grid: 36 meridians + 17 parallels ──────────── */
+/* ── Grid: meridians + parallels + prominent equator ──── */
 
 function CleanGrid({ r }: { r: number }) {
   const objs = useMemo(() => {
     const segs = 72;
-    const mat = new THREE.LineBasicMaterial({ color: "#000000", transparent: true, opacity: 0.05, depthWrite: false });
-    const eqMat = new THREE.LineBasicMaterial({ color: "#000000", transparent: true, opacity: 0.3, depthWrite: false });
+    // Normal grid lines — darker than before
+    const mat = new THREE.LineBasicMaterial({ color: "#000000", transparent: true, opacity: 0.1, depthWrite: false });
+    // Equator line — very prominent
+    const eqMat = new THREE.LineBasicMaterial({ color: "#000000", transparent: true, opacity: 0.35, depthWrite: false });
     const lines: THREE.Line[] = [];
 
     for (let lat = -80; lat <= 80; lat += 10) {
@@ -89,7 +86,7 @@ function CleanGrid({ r }: { r: number }) {
 
 function ContinentOutlines({ r }: { r: number }) {
   const objs = useMemo(() => {
-    const mat = new THREE.LineBasicMaterial({ color: "#000000", transparent: true, opacity: 0.12, depthWrite: false });
+    const mat = new THREE.LineBasicMaterial({ color: "#000000", transparent: true, opacity: 0.18, depthWrite: false });
     return POLYS.map(poly => {
       const pos = new Float32Array(poly.length * 3);
       for (let i = 0; i < poly.length; i++) {
@@ -105,7 +102,7 @@ function ContinentOutlines({ r }: { r: number }) {
   return <group>{objs.map((o, i) => <primitive key={i} object={o} />)}</group>;
 }
 
-/* ── Continent dot cloud (edge-dense, organic) ────────── */
+/* ── Continent dot cloud ────────────────────────────── */
 
 function ContinentCloud({ r }: { r: number }) {
   const geo = useMemo(() => {
@@ -121,12 +118,12 @@ function ContinentCloud({ r }: { r: number }) {
 
   return (
     <points geometry={geo}>
-      <pointsMaterial color="#000000" size={0.018} transparent opacity={0.3} sizeAttenuation depthWrite={false} />
+      <pointsMaterial color="#000000" size={0.018} transparent opacity={0.35} sizeAttenuation depthWrite={false} />
     </points>
   );
 }
 
-/* ── Guest markers (all 302) ──────────────────────────── */
+/* ── Guest markers (all 302) — bigger and more visible ── */
 
 function GuestMarkers({ r, activeIdx }: { r: number; activeIdx: number }) {
   const geo = useMemo(() => {
@@ -148,7 +145,7 @@ function GuestMarkers({ r, activeIdx }: { r: number; activeIdx: number }) {
   return (
     <group>
       <points geometry={geo}>
-        <pointsMaterial color="#d4a853" size={0.035} transparent opacity={0.8} sizeAttenuation depthWrite={false} />
+        <pointsMaterial color="#d4a853" size={0.05} transparent opacity={0.9} sizeAttenuation depthWrite={false} />
       </points>
       {activePos && <ActiveHighlight position={activePos} />}
     </group>
@@ -164,19 +161,19 @@ function ActiveHighlight({ position }: { position: THREE.Vector3 }) {
     <group position={position}>
       <Billboard>
         <mesh ref={ref}>
-          <ringGeometry args={[0.055, 0.09, 32]} />
-          <meshBasicMaterial color="#d4a853" transparent opacity={0.55} side={THREE.DoubleSide} depthWrite={false} />
+          <ringGeometry args={[0.06, 0.1, 32]} />
+          <meshBasicMaterial color="#d4a853" transparent opacity={0.6} side={THREE.DoubleSide} depthWrite={false} />
         </mesh>
         <mesh>
-          <circleGeometry args={[0.045, 24]} />
-          <meshBasicMaterial color="#d4a853" transparent opacity={0.9} depthWrite={false} />
+          <circleGeometry args={[0.05, 24]} />
+          <meshBasicMaterial color="#d4a853" transparent opacity={0.95} depthWrite={false} />
         </mesh>
       </Billboard>
     </group>
   );
 }
 
-/* ── Rotation: always land guest at unified screen position ── */
+/* ── Rotation: land guest at unified screen position ── */
 
 function RotatingScene({ children, activeIdx }: { children: React.ReactNode; activeIdx: number }) {
   const groupRef = useRef<THREE.Group>(null);
@@ -190,11 +187,11 @@ function RotatingScene({ children, activeIdx }: { children: React.ReactNode; act
   useEffect(() => {
     if (activeIdx < 0 || activeIdx >= GUESTS.length) return;
     const guest = GUESTS[activeIdx];
-    // Y rotation (longitude)
+    // Y rotation (longitude) → centers guest horizontally
     const desiredY = lngToRotY(guest.lng);
     const diffY = normalizeAngle(desiredY - currentY.current);
     targetY.current = currentY.current + diffY;
-    // X rotation (latitude tilt) — varies per guest for visual variety
+    // X rotation (latitude tilt) → centers guest vertically
     targetX.current = latToRotX(guest.lat);
     isIdle.current = false;
     if (idleTimer.current) clearTimeout(idleTimer.current);
@@ -264,7 +261,7 @@ function Scene({ onGuestChange }: GlobeProps) {
 export default function Globe({ onGuestChange }: GlobeProps) {
   return (
     <Canvas
-      camera={{ position: [0, 0.4, 5.2], fov: 36 }}
+      camera={{ position: [0, 0, 5.2], fov: 36 }}
       style={{ background: "transparent" }}
       gl={{ alpha: true, antialias: true }}
       dpr={[1, 1.5]}

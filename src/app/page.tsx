@@ -24,10 +24,13 @@ export default function HomePage() {
   const globeSectionRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: globeSectionRef,
-    offset: ["start end", "center center"],
+    offset: ["start end", "end start"],
   });
-  // Scale from 0.8 → 1.05 as globe scrolls into view — dramatic zoom
-  const globeScale = useTransform(scrollYProgress, [0, 1], [0.8, 1.05]);
+
+  // Anthropic-style: gray bg container scales from 90% to 100% width
+  // and border-radius shrinks from rounded to square
+  const containerScale = useTransform(scrollYProgress, [0, 0.4, 0.7], [0.88, 1.0, 1.0]);
+  const borderRadius = useTransform(scrollYProgress, [0, 0.4, 0.7], [32, 0, 0]);
 
   return (
     <div className="min-h-screen bg-[#f5f0e8]">
@@ -53,31 +56,38 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* ─── Globe + Floating Guest Card ─── */}
-      <section ref={globeSectionRef} className="relative">
-        {/* Globe canvas with scroll-based zoom */}
+      {/* ─── Globe Section with Anthropic-style expanding gray background ─── */}
+      <section ref={globeSectionRef} className="relative mt-4 overflow-hidden">
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
-          style={{ scale: globeScale }}
-          className="w-full h-[55vh] sm:h-[60vh] md:h-[65vh] lg:h-[70vh] max-h-[760px] origin-center"
+          style={{
+            scale: containerScale,
+            borderRadius,
+          }}
+          className="relative mx-auto bg-[#e8e3da] origin-center"
         >
-          <Globe onGuestChange={handleGuestChange} />
-        </motion.div>
+          {/* Globe canvas — centered, no camera Y offset */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
+            className="w-full h-[60vh] sm:h-[65vh] md:h-[70vh] lg:h-[75vh] max-h-[800px]"
+          >
+            <Globe onGuestChange={handleGuestChange} />
+          </motion.div>
 
-        {/* Guest card overlay - compact gradient so globe is more visible */}
-        <div className="absolute inset-x-0 bottom-0 z-10 pointer-events-none">
-          {/* Gradient fade: transparent → page bg (shorter) */}
-          <div className="h-16 sm:h-20" style={{ background: "linear-gradient(to bottom, transparent 0%, #f5f0e8 90%)" }} />
-          <div className="bg-[#f5f0e8] pointer-events-auto pb-4">
-            <GuestCard guest={activeGuest} />
+          {/* Guest card — inside the gray container, minimal overlay */}
+          <div className="relative z-10">
+            {/* Tiny gradient transition from globe to card area */}
+            <div className="h-8 sm:h-12 -mt-8 sm:-mt-12 relative z-10" style={{ background: "linear-gradient(to bottom, transparent, #e8e3da)" }} />
+            <div className="bg-[#e8e3da] pb-8 sm:pb-10">
+              <GuestCard guest={activeGuest} />
+            </div>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* Bottom spacer */}
-      <div className="h-8" />
+      <div className="h-16" />
     </div>
   );
 }
