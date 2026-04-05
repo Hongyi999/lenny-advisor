@@ -27,10 +27,9 @@ export default function HomePage() {
     offset: ["start end", "center center"],
   });
 
-  // Gray container: starts narrow (75%) with rounded corners,
-  // expands to 100% (fills screen) as you scroll — like Anthropic
-  const containerScale = useTransform(scrollYProgress, [0, 0.6], [0.75, 1.0]);
-  const borderRadius = useTransform(scrollYProgress, [0, 0.6], [28, 0]);
+  // Use width percentage (NOT scale) to avoid transform-origin position jumps
+  const containerWidth = useTransform(scrollYProgress, [0, 0.5], ["65%", "100%"]);
+  const borderRadius = useTransform(scrollYProgress, [0, 0.5], [28, 0]);
 
   return (
     <div className="min-h-screen bg-[#f5f0e8]">
@@ -56,20 +55,23 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* ─── Globe Section: Anthropic-style expanding gray container ─── */}
+      {/* ─── Globe Section: expanding gray container ─── */}
       <section ref={globeSectionRef} className="relative mt-2">
         <motion.div
-          style={{ scale: containerScale, borderRadius }}
-          className="relative mx-auto bg-[#e8e3d9] origin-top overflow-hidden"
+          style={{ width: containerWidth, borderRadius }}
+          className="relative mx-auto bg-[#e8e3d9] overflow-hidden"
         >
-          {/* Floating text on upper portion of globe */}
-          <div className="absolute top-[6%] sm:top-[8%] inset-x-0 text-center z-20 pointer-events-none">
-            <p className="text-sm sm:text-base text-[#1a1a1a]/40 tracking-wide uppercase font-medium">
-              302 guests &middot; 50+ countries &middot; 300+ episodes
+          {/* Large serif title floating on upper globe — Anthropic style */}
+          <div className="absolute top-[5%] sm:top-[7%] inset-x-0 text-center z-20 pointer-events-none px-6">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif text-[#1a1a1a] leading-tight max-w-3xl mx-auto">
+              Where the world&apos;s best<br />share what they know
+            </h2>
+            <p className="text-sm sm:text-base text-[#6b6b6b] mt-3">
+              302 podcast guests across 50+ countries
             </p>
           </div>
 
-          {/* Globe canvas — camera centered at (0,0), big globe */}
+          {/* Globe canvas */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -79,7 +81,13 @@ export default function HomePage() {
             <Globe onGuestChange={handleGuestChange} />
           </motion.div>
 
-          {/* Guest card: floats at bottom of globe container */}
+          {/* Gradient backdrop for card readability */}
+          <div
+            className="absolute bottom-0 inset-x-0 h-[30%] z-10 pointer-events-none"
+            style={{ background: "linear-gradient(to bottom, transparent 0%, #e8e3d9 70%)" }}
+          />
+
+          {/* Guest card floating at bottom */}
           <div className="absolute bottom-[3%] sm:bottom-[4%] inset-x-0 z-20 pointer-events-none">
             <div className="pointer-events-auto">
               <GuestCard guest={activeGuest} />

@@ -122,6 +122,13 @@ function ContinentCloud({ r }: { r: number }) {
 
 /* ── Continent highlight: gold fill on active guest's continent ── */
 
+/** Get centroid of a polygon */
+function polyCentroid(poly: [number, number][]): [number, number] {
+  let lat = 0, lng = 0;
+  for (const [la, ln] of poly) { lat += la; lng += ln; }
+  return [lat / poly.length, lng / poly.length];
+}
+
 function ContinentHighlight({ r, activeIdx }: { r: number; activeIdx: number }) {
   const { outlineObj, fillGeo } = useMemo(() => {
     if (activeIdx < 0 || activeIdx >= GUESTS.length) return { outlineObj: null, fillGeo: null };
@@ -131,6 +138,16 @@ function ContinentHighlight({ r, activeIdx }: { r: number; activeIdx: number }) 
     let polyIdx = -1;
     for (let i = 0; i < POLYS.length; i++) {
       if (pip(guest.lat, guest.lng, POLYS[i])) { polyIdx = i; break; }
+    }
+
+    // Fallback: find nearest polygon by centroid distance
+    if (polyIdx === -1) {
+      let minDist = Infinity;
+      for (let i = 0; i < POLYS.length; i++) {
+        const [cLat, cLng] = polyCentroid(POLYS[i]);
+        const dist = Math.hypot(guest.lat - cLat, guest.lng - cLng);
+        if (dist < minDist) { minDist = dist; polyIdx = i; }
+      }
     }
     if (polyIdx === -1) return { outlineObj: null, fillGeo: null };
 
@@ -144,7 +161,7 @@ function ContinentHighlight({ r, activeIdx }: { r: number; activeIdx: number }) 
     }
     const outGeo = new THREE.BufferGeometry();
     outGeo.setAttribute("position", new THREE.BufferAttribute(outPos, 3));
-    const outMat = new THREE.LineBasicMaterial({ color: "#d4a853", transparent: true, opacity: 0.6, depthWrite: false });
+    const outMat = new THREE.LineBasicMaterial({ color: "#d4a853", transparent: true, opacity: 0.8, depthWrite: false });
     const outline = new THREE.LineLoop(outGeo, outMat);
 
     // Gold fill: create a ShapeGeometry in 2D (lng, lat), then remap vertices to sphere
@@ -174,7 +191,7 @@ function ContinentHighlight({ r, activeIdx }: { r: number; activeIdx: number }) 
     <group>
       <primitive object={outlineObj} />
       <mesh geometry={fillGeo}>
-        <meshBasicMaterial color="#d4a853" transparent opacity={0.18} side={THREE.DoubleSide} depthWrite={false} />
+        <meshBasicMaterial color="#d4a853" transparent opacity={0.25} side={THREE.DoubleSide} depthWrite={false} />
       </mesh>
     </group>
   );
@@ -202,7 +219,7 @@ function GuestMarkers({ r, activeIdx }: { r: number; activeIdx: number }) {
   return (
     <group>
       <points geometry={geo}>
-        <pointsMaterial color="#d4a853" size={0.055} transparent opacity={0.9} sizeAttenuation depthWrite={false} />
+        <pointsMaterial color="#d4a853" size={0.08} transparent opacity={1.0} sizeAttenuation depthWrite={false} />
       </points>
       {activePos && <ActiveHighlight position={activePos} />}
     </group>

@@ -23,7 +23,7 @@ export default function GuestCard({ guest }: { guest: GuestData | null }) {
 
   return (
     <div className="flex justify-center">
-      <div className="w-full max-w-lg min-h-[160px]">
+      <div className="w-full max-w-2xl min-h-[180px]">
         <AnimatePresence mode="wait">
           {guest && (
             <motion.div
@@ -34,19 +34,19 @@ export default function GuestCard({ guest }: { guest: GuestData | null }) {
               transition={{ duration: 0.5, ease: "easeOut" }}
               className="text-center"
             >
-              {/* YouTube Thumbnail — compact */}
+              {/* YouTube Thumbnail — larger */}
               {guest.thumbnail && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.96 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.6, ease: "easeOut" }}
-                  className="mx-auto mb-3 max-w-[260px] sm:max-w-[280px]"
+                  className="mx-auto mb-4 max-w-[360px] sm:max-w-[400px]"
                 >
                   <a
                     href={ytUrl ?? "#"}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block relative rounded-lg overflow-hidden shadow-md shadow-black/[0.08] hover:shadow-lg transition-shadow group"
+                    className="block relative rounded-xl overflow-hidden shadow-lg shadow-black/[0.1] hover:shadow-xl transition-shadow group"
                   >
                     <div className="aspect-video bg-[#e8e0d0]">
                       <img
@@ -57,32 +57,32 @@ export default function GuestCard({ guest }: { guest: GuestData | null }) {
                       />
                     </div>
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="w-10 h-10 rounded-full bg-black/60 flex items-center justify-center">
-                        <svg viewBox="0 0 24 24" className="w-4 h-4 text-white ml-0.5" fill="currentColor">
+                      <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
+                        <svg viewBox="0 0 24 24" className="w-5 h-5 text-white ml-0.5" fill="currentColor">
                           <path d="M8 5v14l11-7z" />
                         </svg>
                       </div>
                     </div>
-                    <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/30 to-transparent" />
-                    <div className="absolute bottom-1 left-2 right-2 flex items-center gap-1">
-                      <span className="text-white text-[10px] font-medium truncate">{guest.guest}</span>
-                      <span className="text-white/50 text-[10px]">· Lenny&apos;s Podcast</span>
+                    <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/30 to-transparent" />
+                    <div className="absolute bottom-1.5 left-2.5 right-2.5 flex items-center gap-1.5">
+                      <span className="text-white text-[11px] font-medium truncate">{guest.guest}</span>
+                      <span className="text-white/50 text-[11px]">· Lenny&apos;s Podcast</span>
                     </div>
                   </a>
                 </motion.div>
               )}
 
               {/* Guest name badge */}
-              <div className="mb-1.5">
-                <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#d4a853]/15 text-[#a07d25] text-[11px] font-semibold tracking-wider uppercase">
+              <div className="mb-2">
+                <span className="inline-block px-3 py-1 rounded-full bg-[#d4a853]/15 text-[#a07d25] text-xs font-semibold tracking-wider uppercase">
                   {guest.guest}
                 </span>
               </div>
 
-              {/* Typewriter quote — compact */}
-              <p className="text-[#1a1a1a] text-base sm:text-lg font-serif italic leading-snug px-4">
+              {/* Typewriter quote — larger */}
+              <p className="text-[#1a1a1a] text-lg sm:text-xl font-serif italic leading-relaxed px-4">
                 &ldquo;{displayed}
-                {!done && <span className="inline-block w-0.5 h-4 bg-[#d4a853] ml-0.5 align-text-bottom animate-pulse" />}
+                {!done && <span className="inline-block w-0.5 h-5 bg-[#d4a853] ml-0.5 align-text-bottom animate-pulse" />}
                 {done && <>&rdquo;</>}
               </p>
             </motion.div>
