@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import type { GuestData } from "@/data/guests";
 
@@ -51,14 +50,11 @@ export default function GuestCard({ guest }: { guest: GuestData | null }) {
                       className="block relative rounded-xl overflow-hidden group"
                     >
                       <div className="aspect-video bg-[#e8e0d0]">
-                        <Image
+                        <img
                           src={guest.thumbnail}
                           alt={guest.guest}
-                          width={480}
-                          height={270}
-                          sizes="(max-width: 640px) 340px, 380px"
                           className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
-                          priority
+                          loading="eager"
                         />
                       </div>
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -77,14 +73,11 @@ export default function GuestCard({ guest }: { guest: GuestData | null }) {
                   ) : (
                     <div className="block relative rounded-xl overflow-hidden">
                       <div className="aspect-video bg-[#e8e0d0]">
-                        <Image
+                        <img
                           src={guest.thumbnail}
                           alt={guest.guest}
-                          width={480}
-                          height={270}
-                          sizes="(max-width: 640px) 340px, 380px"
                           className="w-full h-full object-cover"
-                          priority
+                          loading="eager"
                         />
                       </div>
                       <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/30 to-transparent" />

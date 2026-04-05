@@ -38,7 +38,7 @@ function lngToRotY(lng: number): number {
  * Positive rotation tilts globe forward (northern hemisphere comes down).
  * LAT_OFFSET is subtracted to leave the dot slightly above center.
  */
-const LAT_OFFSET = 0.40;
+const LAT_OFFSET = -0.15;
 function latToRotX(lat: number): number {
   return (lat * Math.PI) / 180 - LAT_OFFSET;
 }
