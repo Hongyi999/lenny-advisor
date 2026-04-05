@@ -7,7 +7,15 @@ import SearchInput from "./SearchInput";
 import AnswerCard from "./AnswerCard";
 import ThinkingIndicator from "./ThinkingIndicator";
 import type { Citation } from "@/lib/rag";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Lightbulb } from "lucide-react";
+
+const TOPIC_SUGGESTIONS = [
+  "How do I find product-market fit?",
+  "What makes a great 1:1 meeting?",
+  "How should I think about career growth?",
+  "What makes a great product manager?",
+  "How do I build a growth engine?",
+];
 
 interface Message {
   id: string;
@@ -18,11 +26,13 @@ interface Message {
 
 interface ChatViewProps {
   conversationId?: string;
+  conversationTitle?: string;
   initialMessages?: Message[];
 }
 
 export default function ChatView({
   conversationId: initialConversationId,
+  conversationTitle,
   initialMessages = [],
 }: ChatViewProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
@@ -48,24 +58,7 @@ export default function ChatView({
     scrollToBottom();
   }, [messages, isThinking, scrollToBottom]);
 
-  useEffect(() => {
-    if (initialQuery && !hasSentInitial && messages.length === 0) {
-      setHasSentInitial(true);
-      handleSendMessage(initialQuery);
-    }
-  }, [initialQuery, hasSentInitial]);
-
-  // Animate thinking steps
-  useEffect(() => {
-    if (!isThinking) return;
-    const timers = [
-      setTimeout(() => setThinkingStep(1), 1500),
-      setTimeout(() => setThinkingStep(2), 3000),
-    ];
-    return () => timers.forEach(clearTimeout);
-  }, [isThinking]);
-
-  async function handleSendMessage(message: string) {
+  const handleSendMessage = useCallback(async function handleSendMessage(message: string) {
     const userMsg: Message = {
       id: `user-${Date.now()}`,
       role: "user",
@@ -193,10 +186,38 @@ export default function ChatView({
 
     setIsStreaming(false);
     setIsThinking(false);
-  }
+  }, [currentConversationId, router]);
+
+  useEffect(() => {
+    if (initialQuery && !hasSentInitial && messages.length === 0) {
+      setHasSentInitial(true);
+      handleSendMessage(initialQuery);
+    }
+  }, [initialQuery, hasSentInitial, messages.length, handleSendMessage]);
+
+  // Animate thinking steps
+  useEffect(() => {
+    if (!isThinking) return;
+    const timers = [
+      setTimeout(() => setThinkingStep(1), 1500),
+      setTimeout(() => setThinkingStep(2), 3000),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, [isThinking]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Conversation header */}
+      {(conversationTitle || currentConversationId) && (
+        <div className="border-b border-sand-200 bg-white/80 backdrop-blur-sm px-4 sm:px-6 py-3">
+          <div className="max-w-3xl mx-auto">
+            <h1 className="text-sm font-medium text-sand-700 truncate">
+              {conversationTitle || "Conversation"}
+            </h1>
+          </div>
+        </div>
+      )}
+
       {/* Messages area */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto">
         {messages.length === 0 && !isThinking ? (
@@ -221,11 +242,30 @@ export default function ChatView({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-sand-500 text-center max-w-md leading-relaxed"
+              className="text-sand-500 text-center max-w-md leading-relaxed mb-8"
             >
               Describe a challenge you&apos;re facing. I&apos;ll find insights
               from 300+ Lenny&apos;s Podcast episodes to guide you.
             </motion.p>
+
+            {/* Topic suggestions */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="flex flex-wrap justify-center gap-2 max-w-lg"
+            >
+              {TOPIC_SUGGESTIONS.map((topic) => (
+                <button
+                  key={topic}
+                  onClick={() => handleSendMessage(topic)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-sand-200 bg-white text-sm text-sand-600 hover:border-accent/40 hover:text-accent hover:bg-accent-light/50 transition-all cursor-pointer"
+                >
+                  <Lightbulb className="w-3.5 h-3.5" />
+                  {topic}
+                </button>
+              ))}
+            </motion.div>
           </div>
         ) : (
           <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">

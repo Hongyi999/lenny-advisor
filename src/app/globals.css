@@ -1,9 +1,6 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
-  --font-serif: 'Instrument Serif', ui-serif, Georgia, serif;
-
   /* Anthropic warm cream palette */
   --color-cream: #faf9f6;
   --color-cream-dark: #f0ede6;
@@ -80,11 +77,6 @@ html {
 body {
   color: var(--color-text-primary);
   background-color: var(--color-cream);
-}
-
-::selection {
-  background-color: var(--color-tan-200);
-  color: var(--color-text-primary);
 }
 
 input:focus,
