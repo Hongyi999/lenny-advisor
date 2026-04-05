@@ -28,13 +28,15 @@ export default function HomePage() {
   });
 
   // clip-path: inset() — purely GPU-composited, zero layout reflow, zero jitter
-  // Visually clips the full-width container from both sides to create the "expanding" effect
   const clipInset = useTransform(scrollYProgress, [0, 0.5], [18, 0]);
   const clipRadius = useTransform(scrollYProgress, [0, 0.5], [28, 0]);
   const clipPath = useTransform(
     [clipInset, clipRadius],
     ([inset, radius]: number[]) => `inset(0 ${inset}% round ${radius}px)`
   );
+
+  // Globe scales up as user scrolls — starts smaller for dramatic effect
+  const globeScale = useTransform(scrollYProgress, [0, 0.5], [0.78, 1]);
 
   return (
     <div className="min-h-screen bg-[#f5f0e8]">
@@ -60,11 +62,11 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* ─── Globe Section: clip-path expanding container ─── */}
+      {/* ─── Globe Section: clip-path expanding + scale ─── */}
       <section ref={globeSectionRef} className="relative mt-2">
         <motion.div
           style={{ clipPath }}
-          className="relative bg-[#e8e3d9] overflow-hidden"
+          className="relative bg-[#e8e3d9]"
         >
           {/* Large serif title floating on upper globe */}
           <div className="absolute top-[5%] sm:top-[7%] inset-x-0 text-center z-20 pointer-events-none px-6">
@@ -76,25 +78,25 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Globe canvas */}
+          {/* Globe canvas — scales up on scroll */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.4 }}
-            className="w-full h-[85vh] sm:h-[90vh] max-h-[960px]"
+            style={{ scale: globeScale }}
+            className="w-full h-[85vh] sm:h-[90vh] max-h-[960px] origin-center"
           >
             <Globe onGuestChange={handleGuestChange} />
           </motion.div>
 
-          {/* Gradient backdrop for card readability — taller to cover thumbnail */}
-          <div
-            className="absolute bottom-0 inset-x-0 h-[45%] z-10 pointer-events-none"
-            style={{ background: "linear-gradient(to bottom, transparent 0%, #e8e3d9 60%)" }}
-          />
-
-          {/* Guest card — anchored from top so extra text lines extend downward */}
-          <div className="absolute top-[62%] inset-x-0 z-20 pointer-events-none">
-            <div className="pointer-events-auto">
+          {/* Guest card — centered with local gradient backdrop */}
+          <div className="absolute top-[58%] inset-x-0 z-20 pointer-events-none pb-8">
+            {/* Radial gradient behind card for readability */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{ background: "radial-gradient(ellipse 80% 100% at 50% 40%, #e8e3d9 0%, #e8e3d9ee 40%, transparent 80%)" }}
+            />
+            <div className="relative pointer-events-auto">
               <GuestCard guest={activeGuest} />
             </div>
           </div>

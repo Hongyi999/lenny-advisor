@@ -28,64 +28,56 @@ export default function GuestCard({ guest }: { guest: GuestData | null }) {
           {guest && (
             <motion.div
               key={guest.slug}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
               className="text-center"
             >
-              {/* YouTube Thumbnail — flat, no shadow, with gradient backdrop */}
+              {/* YouTube Thumbnail — flat, no shadow */}
               {guest.thumbnail && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.96 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.6, ease: "easeOut" }}
-                  className="mx-auto mb-4 max-w-[360px] sm:max-w-[400px]"
-                >
-                  {/* Gradient backdrop matching parent bg */}
-                  <div className="relative rounded-xl overflow-hidden" style={{ background: "linear-gradient(to bottom, transparent, #e8e3d9 80%)" }}>
-                    <a
-                      href={ytUrl ?? "#"}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block relative rounded-xl overflow-hidden group"
-                    >
-                      <div className="aspect-video bg-[#e8e0d0]">
-                        <img
-                          src={guest.thumbnail}
-                          alt={guest.guest}
-                          className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
-                          loading="eager"
-                        />
+                <div className="mx-auto mb-3 max-w-[340px] sm:max-w-[380px]">
+                  <a
+                    href={ytUrl ?? "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block relative rounded-xl overflow-hidden group"
+                  >
+                    <div className="aspect-video bg-[#e8e0d0]">
+                      <img
+                        src={guest.thumbnail}
+                        alt={guest.guest}
+                        className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                        loading="eager"
+                      />
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
+                        <svg viewBox="0 0 24 24" className="w-5 h-5 text-white ml-0.5" fill="currentColor">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
                       </div>
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
-                          <svg viewBox="0 0 24 24" className="w-5 h-5 text-white ml-0.5" fill="currentColor">
-                            <path d="M8 5v14l11-7z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/30 to-transparent" />
-                      <div className="absolute bottom-1.5 left-2.5 right-2.5 flex items-center gap-1.5">
-                        <span className="text-white text-[11px] font-medium truncate">{guest.guest}</span>
-                        <span className="text-white/50 text-[11px]">· Lenny&apos;s Podcast</span>
-                      </div>
-                    </a>
-                  </div>
-                </motion.div>
+                    </div>
+                    <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/30 to-transparent" />
+                    <div className="absolute bottom-1.5 left-2.5 right-2.5 flex items-center gap-1.5">
+                      <span className="text-white text-[11px] font-medium truncate">{guest.guest}</span>
+                      <span className="text-white/50 text-[11px]">· Lenny&apos;s Podcast</span>
+                    </div>
+                  </a>
+                </div>
               )}
 
               {/* Guest name badge */}
-              <div className="mb-2">
+              <div className="mb-1.5">
                 <span className="inline-block px-3 py-1 rounded-full bg-[#d4a853]/15 text-[#a07d25] text-xs font-semibold tracking-wider uppercase">
                   {guest.guest}
                 </span>
               </div>
 
-              {/* Typewriter quote — text overflows downward naturally */}
-              <p className="text-[#1a1a1a] text-lg sm:text-xl font-serif italic leading-relaxed px-4">
+              {/* Quote — forced single line with ellipsis truncation */}
+              <p className="text-[#1a1a1a] text-base sm:text-lg font-serif italic leading-normal px-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-xl mx-auto">
                 &ldquo;{displayed}
-                {!done && <span className="inline-block w-0.5 h-5 bg-[#d4a853] ml-0.5 align-text-bottom animate-pulse" />}
+                {!done && <span className="inline-block w-0.5 h-4 bg-[#d4a853] ml-0.5 align-text-bottom animate-pulse" />}
                 {done && <>&rdquo;</>}
               </p>
             </motion.div>
