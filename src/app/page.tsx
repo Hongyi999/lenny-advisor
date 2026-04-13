@@ -81,7 +81,7 @@ export default function HomePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.4 }}
-            className="relative w-full h-[70vh] sm:h-[75vh] max-h-[800px]"
+            className="relative w-full h-[90vh] sm:h-[95vh] max-h-[1000px]"
           >
             <Globe onGuestChange={handleGuestChange} />
 
