@@ -76,22 +76,27 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Globe canvas */}
+          {/* Globe canvas + floating guest card */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.4 }}
-            className="w-full h-[70vh] sm:h-[75vh] max-h-[800px]"
+            className="relative w-full h-[70vh] sm:h-[75vh] max-h-[800px]"
           >
             <Globe onGuestChange={handleGuestChange} />
-          </motion.div>
 
-          {/* Guest card — below the globe, in normal flow */}
-          <div className="relative z-20 bg-[#e8e3d9] px-4 pb-12">
-            <div className="-mt-8">
-              <GuestCard guest={activeGuest} />
+            {/* Guest card — floating over globe with radial gradient glow */}
+            <div className="absolute bottom-0 inset-x-0 z-20 flex justify-center pointer-events-none px-4 pb-6">
+              <div
+                className="pointer-events-auto w-full max-w-2xl py-6 px-8"
+                style={{
+                  background: "radial-gradient(ellipse 70% 80% at 50% 55%, rgba(232,227,217,0.93) 0%, rgba(232,227,217,0.7) 45%, rgba(232,227,217,0) 100%)",
+                }}
+              >
+                <GuestCard guest={activeGuest} />
+              </div>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
       </section>
 
