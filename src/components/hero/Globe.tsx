@@ -27,7 +27,6 @@ function normalizeAngle(a: number): number {
 
 /**
  * Rotate Y so the guest longitude lands at SCREEN CENTER horizontally.
- * LNG_OFFSET = 0 → dead center, ensuring yellow dot is directly above card.
  */
 function lngToRotY(lng: number): number {
   return Math.PI / 2 - ((lng + 180) * Math.PI) / 180;
@@ -35,13 +34,33 @@ function lngToRotY(lng: number): number {
 
 /**
  * Tilt globe on X-axis so the guest's latitude lands at a FIXED
- * vertical screen position. Factor = 1.0 for exact correction,
- * plus a small positive offset to push dot ABOVE center
- * (so it appears above the card below).
+ * vertical screen position — between subtitle and card.
+ * Positive rotation tilts globe forward (northern hemisphere comes down).
+ * LAT_OFFSET is subtracted to leave the dot slightly above center.
  */
-const LAT_OFFSET = 0.18; // radians — push dot above globe center
+const LAT_OFFSET = -0.15;
 function latToRotX(lat: number): number {
-  return -(lat * Math.PI) / 180 + LAT_OFFSET;
+  return (lat * Math.PI) / 180 - LAT_OFFSET;
+}
+
+/* ── Circular dot texture (shared) ─────────────────────── */
+
+function useCircleTexture() {
+  const texture = useMemo(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext("2d")!;
+    ctx.beginPath();
+    ctx.arc(32, 32, 30, 0, Math.PI * 2);
+    ctx.fillStyle = "#ffffff";
+    ctx.fill();
+    return new THREE.CanvasTexture(canvas);
+  }, []);
+  useEffect(() => {
+    return () => { texture.dispose(); };
+  }, [texture]);
+  return texture;
 }
 
 /* ── Grid: meridians + parallels + prominent equator ──── */
@@ -76,6 +95,15 @@ function CleanGrid({ r }: { r: number }) {
     return lines;
   }, [r]);
 
+  useEffect(() => {
+    return () => {
+      for (const line of objs) {
+        line.geometry.dispose();
+        (line.material as THREE.Material).dispose();
+      }
+    };
+  }, [objs]);
+
   return <group>{objs.map((o, i) => <primitive key={i} object={o} />)}</group>;
 }
 
@@ -96,6 +124,15 @@ function ContinentOutlines({ r }: { r: number }) {
     });
   }, [r]);
 
+  useEffect(() => {
+    return () => {
+      for (const loop of objs) {
+        loop.geometry.dispose();
+        (loop.material as THREE.Material).dispose();
+      }
+    };
+  }, [objs]);
+
   return <group>{objs.map((o, i) => <primitive key={i} object={o} />)}</group>;
 }
 
@@ -113,6 +150,10 @@ function ContinentCloud({ r }: { r: number }) {
     return g;
   }, [r]);
 
+  useEffect(() => {
+    return () => { geo.dispose(); };
+  }, [geo]);
+
   return (
     <points geometry={geo}>
       <pointsMaterial color="#000000" size={0.018} transparent opacity={0.35} sizeAttenuation depthWrite={false} />
@@ -122,21 +163,33 @@ function ContinentCloud({ r }: { r: number }) {
 
 /* ── Continent highlight: gold fill on active guest's continent ── */
 
+function polyCentroid(poly: [number, number][]): [number, number] {
+  let lat = 0, lng = 0;
+  for (const [la, ln] of poly) { lat += la; lng += ln; }
+  return [lat / poly.length, lng / poly.length];
+}
+
 function ContinentHighlight({ r, activeIdx }: { r: number; activeIdx: number }) {
   const { outlineObj, fillGeo } = useMemo(() => {
     if (activeIdx < 0 || activeIdx >= GUESTS.length) return { outlineObj: null, fillGeo: null };
     const guest = GUESTS[activeIdx];
 
-    // Find which continent polygon contains this guest
     let polyIdx = -1;
     for (let i = 0; i < POLYS.length; i++) {
       if (pip(guest.lat, guest.lng, POLYS[i])) { polyIdx = i; break; }
+    }
+    if (polyIdx === -1) {
+      let minDist = Infinity;
+      for (let i = 0; i < POLYS.length; i++) {
+        const [cLat, cLng] = polyCentroid(POLYS[i]);
+        const dist = Math.hypot(guest.lat - cLat, guest.lng - cLng);
+        if (dist < minDist) { minDist = dist; polyIdx = i; }
+      }
     }
     if (polyIdx === -1) return { outlineObj: null, fillGeo: null };
 
     const poly = POLYS[polyIdx];
 
-    // Gold outline for this continent
     const outPos = new Float32Array(poly.length * 3);
     for (let i = 0; i < poly.length; i++) {
       const v = ll2v(poly[i][0], poly[i][1], r + 0.008);
@@ -144,10 +197,9 @@ function ContinentHighlight({ r, activeIdx }: { r: number; activeIdx: number }) 
     }
     const outGeo = new THREE.BufferGeometry();
     outGeo.setAttribute("position", new THREE.BufferAttribute(outPos, 3));
-    const outMat = new THREE.LineBasicMaterial({ color: "#d4a853", transparent: true, opacity: 0.6, depthWrite: false });
+    const outMat = new THREE.LineBasicMaterial({ color: "#d4a853", transparent: true, opacity: 0.8, depthWrite: false });
     const outline = new THREE.LineLoop(outGeo, outMat);
 
-    // Gold fill: create a ShapeGeometry in 2D (lng, lat), then remap vertices to sphere
     const shape = new THREE.Shape();
     shape.moveTo(poly[0][1], poly[0][0]);
     for (let i = 1; i < poly.length; i++) {
@@ -168,21 +220,32 @@ function ContinentHighlight({ r, activeIdx }: { r: number; activeIdx: number }) 
     return { outlineObj: outline, fillGeo: shapeGeo };
   }, [activeIdx, r]);
 
+  useEffect(() => {
+    return () => {
+      if (outlineObj) {
+        outlineObj.geometry.dispose();
+        (outlineObj.material as THREE.Material).dispose();
+      }
+      fillGeo?.dispose();
+    };
+  }, [outlineObj, fillGeo]);
+
   if (!outlineObj || !fillGeo) return null;
 
   return (
     <group>
       <primitive object={outlineObj} />
       <mesh geometry={fillGeo}>
-        <meshBasicMaterial color="#d4a853" transparent opacity={0.18} side={THREE.DoubleSide} depthWrite={false} />
+        <meshBasicMaterial color="#d4a853" transparent opacity={0.25} side={THREE.DoubleSide} depthWrite={false} />
       </mesh>
     </group>
   );
 }
 
-/* ── Guest markers (all 302) — large and visible ────── */
+/* ── Guest markers (circular dots) ────────────────────── */
 
 function GuestMarkers({ r, activeIdx }: { r: number; activeIdx: number }) {
+  const circleMap = useCircleTexture();
   const geo = useMemo(() => {
     const pos = new Float32Array(GUESTS.length * 3);
     for (let i = 0; i < GUESTS.length; i++) {
@@ -194,6 +257,10 @@ function GuestMarkers({ r, activeIdx }: { r: number; activeIdx: number }) {
     return g;
   }, [r]);
 
+  useEffect(() => {
+    return () => { geo.dispose(); };
+  }, [geo]);
+
   const activePos = useMemo(() => {
     if (activeIdx < 0 || activeIdx >= GUESTS.length) return null;
     return ll2v(GUESTS[activeIdx].lat, GUESTS[activeIdx].lng, r + 0.012);
@@ -202,28 +269,36 @@ function GuestMarkers({ r, activeIdx }: { r: number; activeIdx: number }) {
   return (
     <group>
       <points geometry={geo}>
-        <pointsMaterial color="#d4a853" size={0.055} transparent opacity={0.9} sizeAttenuation depthWrite={false} />
+        <pointsMaterial color="#d4a853" size={0.06} map={circleMap} transparent opacity={1.0} sizeAttenuation depthWrite={false} alphaTest={0.4} />
       </points>
       {activePos && <ActiveHighlight position={activePos} />}
     </group>
   );
 }
 
+/* ── Active highlight — refined, thin ring + small dot ── */
+
 function ActiveHighlight({ position }: { position: THREE.Vector3 }) {
   const ref = useRef<THREE.Mesh>(null);
   const t = useRef(0);
-  useFrame((_, dt) => { if (!ref.current) return; t.current += dt; ref.current.scale.setScalar(1 + Math.sin(t.current * 2.5) * 0.18); });
+  useFrame((_, dt) => {
+    if (!ref.current) return;
+    t.current += dt;
+    ref.current.scale.setScalar(1 + Math.sin(t.current * 2.5) * 0.12);
+  });
 
   return (
     <group position={position}>
       <Billboard>
+        {/* Thin pulsing ring */}
         <mesh ref={ref}>
-          <ringGeometry args={[0.07, 0.12, 32]} />
-          <meshBasicMaterial color="#d4a853" transparent opacity={0.65} side={THREE.DoubleSide} depthWrite={false} />
+          <ringGeometry args={[0.045, 0.058, 48]} />
+          <meshBasicMaterial color="#d4a853" transparent opacity={0.5} side={THREE.DoubleSide} depthWrite={false} />
         </mesh>
+        {/* Small solid center dot */}
         <mesh>
-          <circleGeometry args={[0.055, 24]} />
-          <meshBasicMaterial color="#d4a853" transparent opacity={0.95} depthWrite={false} />
+          <circleGeometry args={[0.035, 32]} />
+          <meshBasicMaterial color="#d4a853" transparent opacity={0.9} depthWrite={false} />
         </mesh>
       </Billboard>
     </group>
@@ -244,11 +319,9 @@ function RotatingScene({ children, activeIdx }: { children: React.ReactNode; act
   useEffect(() => {
     if (activeIdx < 0 || activeIdx >= GUESTS.length) return;
     const guest = GUESTS[activeIdx];
-    // Y rotation: center guest horizontally
     const desiredY = lngToRotY(guest.lng);
     const diffY = normalizeAngle(desiredY - currentY.current);
     targetY.current = currentY.current + diffY;
-    // X rotation: center guest vertically (with upward offset)
     targetX.current = latToRotX(guest.lat);
     isIdle.current = false;
     if (idleTimer.current) clearTimeout(idleTimer.current);
@@ -270,9 +343,9 @@ function RotatingScene({ children, activeIdx }: { children: React.ReactNode; act
       if (Math.abs(remX) < 0.002) { currentX.current = targetX.current; targetX.current = null; }
       else currentX.current += remX * Math.min(dt * 2.5, 0.06);
     } else if (isIdle.current) {
-      // Slowly drift back to slight upward tilt
       currentX.current += (LAT_OFFSET * 0.3 - currentX.current) * Math.min(dt * 0.3, 0.01);
     }
+    // Default 'XYZ': matrix = R_X * R_Y * R_Z → R_Y applied first, then R_X
     groupRef.current.rotation.y = currentY.current;
     groupRef.current.rotation.x = currentX.current;
   });
@@ -282,7 +355,7 @@ function RotatingScene({ children, activeIdx }: { children: React.ReactNode; act
 
 /* ── Scene + Export ────────────────────────────────────── */
 
-interface GlobeProps { onGuestChange?: (guest: GuestData, index: number) => void; }
+interface GlobeProps { onGuestChange?: (guest: GuestData, index?: number) => void; }
 
 function Scene({ onGuestChange }: GlobeProps) {
   const [activeIdx, setActiveIdx] = useState(-1);

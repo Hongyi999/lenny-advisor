@@ -46,6 +46,7 @@ export default async function ConversationPage({ params }: PageProps) {
     <Suspense>
       <ChatView
         conversationId={id}
+        conversationTitle={conversation.title}
         initialMessages={formattedMessages}
       />
     </Suspense>

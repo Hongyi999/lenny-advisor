@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -28,19 +28,14 @@ export default function ConversationSidebar() {
   const router = useRouter();
   const supabase = createClient();
 
-  useEffect(() => {
-    loadConversations();
-    loadUser();
-  }, []);
-
-  async function loadUser() {
+  const loadUser = useCallback(async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (user) setUserEmail(user.email || "");
-  }
+  }, [supabase.auth]);
 
-  async function loadConversations() {
+  const loadConversations = useCallback(async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -54,7 +49,19 @@ export default function ConversationSidebar() {
       .limit(50);
 
     if (data) setConversations(data);
-  }
+  }, [supabase]);
+
+  useEffect(() => {
+    loadConversations();
+    loadUser();
+  }, [loadConversations, loadUser]);
+
+  // Refresh sidebar when navigating to a new conversation
+  useEffect(() => {
+    if (pathname.startsWith("/chat/")) {
+      loadConversations();
+    }
+  }, [pathname, loadConversations]);
 
   async function handleSignOut() {
     await supabase.auth.signOut();

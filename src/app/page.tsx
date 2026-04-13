@@ -27,10 +27,14 @@ export default function HomePage() {
     offset: ["start end", "center center"],
   });
 
-  // Gray container: starts narrow (75%) with rounded corners,
-  // expands to 100% (fills screen) as you scroll — like Anthropic
-  const containerScale = useTransform(scrollYProgress, [0, 0.6], [0.75, 1.0]);
-  const borderRadius = useTransform(scrollYProgress, [0, 0.6], [28, 0]);
+  // clip-path: inset() — GPU-composited, zero reflow, zero jitter
+  // Start at 35% inset for much smaller initial size → dramatic expansion on scroll
+  const clipInset = useTransform(scrollYProgress, [0, 0.5], [35, 0]);
+  const clipRadius = useTransform(scrollYProgress, [0, 0.5], [48, 0]);
+  const clipPath = useTransform(
+    [clipInset, clipRadius],
+    ([inset, radius]: number[]) => `inset(${inset * 0.5}% ${inset}% ${inset * 0.3}% ${inset}% round ${radius}px)`
+  );
 
   return (
     <div className="min-h-screen bg-[#f5f0e8]">
@@ -42,13 +46,13 @@ export default function HomePage() {
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-serif leading-[1.1] tracking-tight text-[#1a1a1a] max-w-4xl mx-auto mb-6">
             Ask anything. Get{" "}
             <span className="text-[#d4a853] relative inline-block">
-              podcast-proven
+              world-class
               <span className="absolute left-0 right-0 bottom-0 h-[2px] bg-[#d4a853]/30 rounded-full" />
             </span>{" "}
-            wisdom.
+            answers.
           </h1>
           <p className="text-base sm:text-lg text-[#6b6b6b] leading-relaxed max-w-xl mx-auto">
-            AI-powered answers grounded in 300+ episodes of Lenny&apos;s Podcast &mdash; with timestamps to the original moments.
+            AI-powered insights from 300+ expert conversations on Lenny&apos;s Podcast.
           </p>
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }} className="mt-8 sm:mt-10">
@@ -56,35 +60,43 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* ─── Globe Section: Anthropic-style expanding gray container ─── */}
+      {/* ─── Globe Section: clip-path expanding from center ─── */}
       <section ref={globeSectionRef} className="relative mt-2">
         <motion.div
-          style={{ scale: containerScale, borderRadius }}
-          className="relative mx-auto bg-[#e8e3d9] origin-top overflow-hidden"
+          style={{ clipPath }}
+          className="relative bg-[#e8e3d9]"
         >
-          {/* Floating text on upper portion of globe */}
-          <div className="absolute top-[6%] sm:top-[8%] inset-x-0 text-center z-20 pointer-events-none">
-            <p className="text-sm sm:text-base text-[#1a1a1a]/40 tracking-wide uppercase font-medium">
-              302 guests &middot; 50+ countries &middot; 300+ episodes
+          {/* Large serif title */}
+          <div className="absolute top-[5%] sm:top-[7%] inset-x-0 text-center z-20 pointer-events-none px-6">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif text-[#1a1a1a] leading-tight max-w-3xl mx-auto">
+              Where the world&apos;s best<br />share what they know
+            </h2>
+            <p className="text-sm sm:text-base text-[#6b6b6b] mt-3">
+              302 podcast guests across 50+ countries
             </p>
           </div>
 
-          {/* Globe canvas — camera centered at (0,0), big globe */}
+          {/* Globe canvas + floating guest card */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.4 }}
-            className="w-full h-[85vh] sm:h-[90vh] max-h-[960px]"
+            className="relative w-full h-[90vh] sm:h-[95vh] max-h-[1000px]"
           >
             <Globe onGuestChange={handleGuestChange} />
-          </motion.div>
 
-          {/* Guest card: floats at bottom of globe container */}
-          <div className="absolute bottom-[3%] sm:bottom-[4%] inset-x-0 z-20 pointer-events-none">
-            <div className="pointer-events-auto">
-              <GuestCard guest={activeGuest} />
+            {/* Guest card — floating over globe with radial gradient glow */}
+            <div className="absolute bottom-0 inset-x-0 z-20 flex justify-center pointer-events-none px-4 pb-6">
+              <div
+                className="pointer-events-auto w-full max-w-2xl py-6 px-8"
+                style={{
+                  background: "radial-gradient(ellipse 70% 80% at 50% 55%, rgba(232,227,217,0.93) 0%, rgba(232,227,217,0.7) 45%, rgba(232,227,217,0) 100%)",
+                }}
+              >
+                <GuestCard guest={activeGuest} />
+              </div>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
       </section>
 
