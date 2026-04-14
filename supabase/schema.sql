@@ -35,9 +35,13 @@ create table if not exists conversations (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete cascade not null,
   title text not null default 'New conversation',
+  is_pinned boolean default false,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
+
+-- Add is_pinned column to existing tables (idempotent)
+alter table conversations add column if not exists is_pinned boolean default false;
 
 create index if not exists conversations_user_idx
   on conversations (user_id, updated_at desc);
@@ -140,7 +144,60 @@ begin
 end;
 $$ language plpgsql;
 
+drop trigger if exists update_conversations_updated_at on conversations;
 create trigger update_conversations_updated_at
   before update on conversations
   for each row
   execute function update_updated_at_column();
+
+-- 9. Shared conversations — public read-only links
+create table if not exists shared_conversations (
+  token text primary key,
+  conversation_id uuid references conversations(id) on delete cascade not null,
+  created_by uuid references auth.users(id) on delete cascade not null,
+  created_at timestamptz default now(),
+  expires_at timestamptz
+);
+
+create index if not exists shared_conversations_conv_idx
+  on shared_conversations (conversation_id);
+
+alter table shared_conversations enable row level security;
+
+-- Anyone (anon + authenticated) can read shared_conversations by token
+drop policy if exists "Anyone can read shared conversations by token" on shared_conversations;
+create policy "Anyone can read shared conversations by token"
+  on shared_conversations for select
+  to anon, authenticated
+  using (true);
+
+-- Only the owner can insert/delete
+drop policy if exists "Users can create their own share links" on shared_conversations;
+create policy "Users can create their own share links"
+  on shared_conversations for insert
+  to authenticated
+  with check (auth.uid() = created_by);
+
+drop policy if exists "Users can delete their own share links" on shared_conversations;
+create policy "Users can delete their own share links"
+  on shared_conversations for delete
+  to authenticated
+  using (auth.uid() = created_by);
+
+-- Anonymous users need read access to shared conversations + messages
+-- (joined via shared_conversations.conversation_id)
+drop policy if exists "Anyone can read shared conversation content" on conversations;
+create policy "Anyone can read shared conversation content"
+  on conversations for select
+  to anon, authenticated
+  using (
+    id in (select conversation_id from shared_conversations)
+  );
+
+drop policy if exists "Anyone can read messages of shared conversations" on messages;
+create policy "Anyone can read messages of shared conversations"
+  on messages for select
+  to anon, authenticated
+  using (
+    conversation_id in (select conversation_id from shared_conversations)
+  );

@@ -129,7 +129,13 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="flex-1 flex items-center justify-center px-4 py-12">
+    <div
+      className="flex-1 flex items-center justify-center px-4 py-12 relative"
+      style={{
+        background:
+          "radial-gradient(ellipse 60% 50% at 50% 30%, rgba(212,168,83,0.12) 0%, rgba(245,240,232,0) 70%)",
+      }}
+    >
       <Suspense>
         <LoginForm />
       </Suspense>

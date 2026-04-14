@@ -7,7 +7,14 @@ import SearchInput from "./SearchInput";
 import AnswerCard from "./AnswerCard";
 import ThinkingIndicator from "./ThinkingIndicator";
 import type { Citation } from "@/lib/rag";
-import { Sparkles, Lightbulb } from "lucide-react";
+import {
+  Sparkles,
+  Lightbulb,
+  Share2,
+  Download,
+  Check,
+  Copy,
+} from "lucide-react";
 
 const TOPIC_SUGGESTIONS = [
   "How do I find product-market fit?",
@@ -47,6 +54,11 @@ export default function ChatView({
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get("q");
   const [hasSentInitial, setHasSentInitial] = useState(false);
+  const [shareState, setShareState] = useState<"idle" | "loading" | "copied">(
+    "idle"
+  );
+  const [exportState, setExportState] = useState<"idle" | "loading">("idle");
+  const [toast, setToast] = useState<string | null>(null);
 
   const scrollToBottom = useCallback(() => {
     if (scrollRef.current) {
@@ -195,6 +207,70 @@ export default function ChatView({
     }
   }, [initialQuery, hasSentInitial, messages.length, handleSendMessage]);
 
+  // Auto-hide toast
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 2400);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  const handleShare = useCallback(async () => {
+    if (!currentConversationId || shareState === "loading") return;
+    setShareState("loading");
+    try {
+      const res = await fetch("/api/share", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversationId: currentConversationId }),
+      });
+      if (!res.ok) throw new Error("Failed to create share link");
+      const { token } = await res.json();
+      const url = `${window.location.origin}/share/${token}`;
+      await navigator.clipboard.writeText(url);
+      setShareState("copied");
+      setToast("Share link copied to clipboard");
+      setTimeout(() => setShareState("idle"), 2000);
+    } catch (err) {
+      console.error("Share error:", err);
+      setShareState("idle");
+      setToast("Couldn't create share link");
+    }
+  }, [currentConversationId, shareState]);
+
+  const handleExport = useCallback(async () => {
+    if (!currentConversationId || exportState === "loading") return;
+    setExportState("loading");
+    try {
+      const res = await fetch("/api/export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversationId: currentConversationId,
+          format: "md",
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to export");
+      const blob = await res.blob();
+      const disposition = res.headers.get("Content-Disposition") || "";
+      const match = disposition.match(/filename="([^"]+)"/);
+      const filename = match?.[1] || "conversation.md";
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setToast("Conversation exported");
+    } catch (err) {
+      console.error("Export error:", err);
+      setToast("Couldn't export conversation");
+    } finally {
+      setExportState("idle");
+    }
+  }, [currentConversationId, exportState]);
+
   // Animate thinking steps
   useEffect(() => {
     if (!isThinking) return;
@@ -210,13 +286,63 @@ export default function ChatView({
       {/* Conversation header */}
       {(conversationTitle || currentConversationId) && (
         <div className="border-b border-sand-200 bg-white/80 backdrop-blur-sm px-4 sm:px-6 py-3">
-          <div className="max-w-3xl mx-auto">
-            <h1 className="text-sm font-medium text-sand-700 truncate">
+          <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
+            <h1 className="text-sm font-medium text-sand-700 truncate flex-1 min-w-0">
               {conversationTitle || "Conversation"}
             </h1>
+            {currentConversationId && (
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  onClick={handleShare}
+                  disabled={shareState === "loading"}
+                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full border border-sand-200 bg-white text-xs font-medium text-sand-700 hover:border-accent/40 hover:text-accent hover:bg-accent-light/50 transition-colors disabled:opacity-60 cursor-pointer"
+                  title="Copy shareable link"
+                >
+                  {shareState === "copied" ? (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      Copied
+                    </>
+                  ) : shareState === "loading" ? (
+                    <>
+                      <Copy className="w-3.5 h-3.5 animate-pulse" />
+                      Creating…
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="w-3.5 h-3.5" />
+                      Share
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={handleExport}
+                  disabled={exportState === "loading"}
+                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full border border-sand-200 bg-white text-xs font-medium text-sand-700 hover:border-accent/40 hover:text-accent hover:bg-accent-light/50 transition-colors disabled:opacity-60 cursor-pointer"
+                  title="Download as Markdown"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  {exportState === "loading" ? "Exporting…" : "Export"}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
+
+      {/* Toast */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-sand-900 text-white text-xs font-medium shadow-lg"
+          >
+            {toast}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Messages area */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto">

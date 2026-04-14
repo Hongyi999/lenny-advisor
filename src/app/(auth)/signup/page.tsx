@@ -46,7 +46,13 @@ export default function SignupPage() {
 
   if (success) {
     return (
-      <div className="flex-1 flex items-center justify-center px-4 py-12">
+      <div
+        className="flex-1 flex items-center justify-center px-4 py-12 relative"
+        style={{
+          background:
+            "radial-gradient(ellipse 60% 50% at 50% 30%, rgba(212,168,83,0.12) 0%, rgba(245,240,232,0) 70%)",
+        }}
+      >
         <div className="w-full max-w-md text-center">
           <div className="w-16 h-16 rounded-full bg-sage-100 flex items-center justify-center mx-auto mb-6">
             <Check className="w-8 h-8 text-sage-500" />
@@ -70,7 +76,13 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="flex-1 flex items-center justify-center px-4 py-12">
+    <div
+      className="flex-1 flex items-center justify-center px-4 py-12 relative"
+      style={{
+        background:
+          "radial-gradient(ellipse 60% 50% at 50% 30%, rgba(212,168,83,0.12) 0%, rgba(245,240,232,0) 70%)",
+      }}
+    >
       <div className="w-full max-w-md">
         <div className="text-center mb-10">
           <Link href="/" className="inline-block mb-6">

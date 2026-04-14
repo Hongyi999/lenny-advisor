@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -11,6 +11,11 @@ import {
   ChevronLeft,
   Menu,
   History,
+  MoreHorizontal,
+  Pin,
+  PinOff,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { cn, truncate } from "@/lib/utils";
 
@@ -18,12 +23,17 @@ interface Conversation {
   id: string;
   title: string;
   updated_at: string;
+  is_pinned?: boolean;
 }
 
 export default function ConversationSidebar() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [userEmail, setUserEmail] = useState("");
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const menuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
@@ -43,8 +53,9 @@ export default function ConversationSidebar() {
 
     const { data } = await supabase
       .from("conversations")
-      .select("id, title, updated_at")
+      .select("id, title, updated_at, is_pinned")
       .eq("user_id", user.id)
+      .order("is_pinned", { ascending: false })
       .order("updated_at", { ascending: false })
       .limit(50);
 
@@ -63,10 +74,86 @@ export default function ConversationSidebar() {
     }
   }, [pathname, loadConversations]);
 
+  // Close menu on outside click
+  useEffect(() => {
+    if (!menuOpenId) return;
+    function onClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpenId(null);
+      }
+    }
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [menuOpenId]);
+
   async function handleSignOut() {
     await supabase.auth.signOut();
     router.push("/");
     router.refresh();
+  }
+
+  async function handleTogglePin(conv: Conversation) {
+    setMenuOpenId(null);
+    const newPinned = !conv.is_pinned;
+    // Optimistic update
+    setConversations((prev) =>
+      prev
+        .map((c) => (c.id === conv.id ? { ...c, is_pinned: newPinned } : c))
+        .sort((a, b) => {
+          if ((b.is_pinned ? 1 : 0) !== (a.is_pinned ? 1 : 0)) {
+            return (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0);
+          }
+          return (
+            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+          );
+        })
+    );
+    const res = await fetch(`/api/conversations/${conv.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_pinned: newPinned }),
+    });
+    if (!res.ok) loadConversations();
+  }
+
+  async function handleDelete(conv: Conversation) {
+    setMenuOpenId(null);
+    if (!confirm(`Delete "${conv.title}"? This cannot be undone.`)) return;
+    // Optimistic remove
+    setConversations((prev) => prev.filter((c) => c.id !== conv.id));
+    const res = await fetch(`/api/conversations/${conv.id}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) {
+      loadConversations();
+      return;
+    }
+    // If currently viewing deleted conversation, navigate away
+    if (pathname === `/chat/${conv.id}`) {
+      router.push("/chat");
+    }
+  }
+
+  function startRename(conv: Conversation) {
+    setMenuOpenId(null);
+    setRenamingId(conv.id);
+    setRenameValue(conv.title);
+  }
+
+  async function commitRename(conv: Conversation) {
+    const trimmed = renameValue.trim();
+    setRenamingId(null);
+    if (!trimmed || trimmed === conv.title) return;
+    // Optimistic update
+    setConversations((prev) =>
+      prev.map((c) => (c.id === conv.id ? { ...c, title: trimmed } : c))
+    );
+    const res = await fetch(`/api/conversations/${conv.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: trimmed }),
+    });
+    if (!res.ok) loadConversations();
   }
 
   const activeId = pathname.startsWith("/chat/")
@@ -129,22 +216,112 @@ export default function ConversationSidebar() {
             </div>
           ) : (
             <div className="space-y-0.5">
-              {conversations.map((conv) => (
-                <Link
-                  key={conv.id}
-                  href={`/chat/${conv.id}`}
-                  onClick={() => setIsOpen(false)}
-                  className={cn(
-                    "flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-colors",
-                    activeId === conv.id
-                      ? "bg-accent-light text-accent font-medium"
-                      : "text-sand-600 hover:bg-sand-50 hover:text-sand-900"
-                  )}
-                >
-                  <MessageSquare className="w-4 h-4 shrink-0 opacity-60" />
-                  <span className="truncate">{truncate(conv.title, 40)}</span>
-                </Link>
-              ))}
+              {conversations.map((conv) => {
+                const isActive = activeId === conv.id;
+                const isRenaming = renamingId === conv.id;
+                return (
+                  <div
+                    key={conv.id}
+                    className={cn(
+                      "group relative flex items-center gap-2 rounded-xl text-sm transition-colors",
+                      isActive
+                        ? "bg-accent-light text-accent font-medium"
+                        : "text-sand-600 hover:bg-sand-50 hover:text-sand-900"
+                    )}
+                  >
+                    {isRenaming ? (
+                      <div className="flex items-center gap-2 px-3 py-2 w-full">
+                        <MessageSquare className="w-4 h-4 shrink-0 opacity-60" />
+                        <input
+                          autoFocus
+                          value={renameValue}
+                          onChange={(e) => setRenameValue(e.target.value)}
+                          onBlur={() => commitRename(conv)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") commitRename(conv);
+                            if (e.key === "Escape") setRenamingId(null);
+                          }}
+                          className="flex-1 min-w-0 bg-white border border-sand-300 rounded-md px-2 py-1 text-sm text-sand-900 focus:outline-none focus:border-accent"
+                        />
+                      </div>
+                    ) : (
+                      <>
+                        <Link
+                          href={`/chat/${conv.id}`}
+                          onClick={() => setIsOpen(false)}
+                          className="flex items-center gap-2.5 pl-3 pr-1 py-2.5 flex-1 min-w-0"
+                        >
+                          {conv.is_pinned ? (
+                            <Pin className="w-4 h-4 shrink-0 opacity-60 fill-current" />
+                          ) : (
+                            <MessageSquare className="w-4 h-4 shrink-0 opacity-60" />
+                          )}
+                          <span className="truncate">
+                            {truncate(conv.title, 36)}
+                          </span>
+                        </Link>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setMenuOpenId(
+                              menuOpenId === conv.id ? null : conv.id
+                            );
+                          }}
+                          className={cn(
+                            "mr-1.5 w-7 h-7 shrink-0 rounded-md flex items-center justify-center transition-opacity cursor-pointer",
+                            menuOpenId === conv.id
+                              ? "opacity-100 bg-sand-200/60"
+                              : "opacity-0 group-hover:opacity-100 hover:bg-sand-200/60"
+                          )}
+                          aria-label="Conversation options"
+                        >
+                          <MoreHorizontal className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
+
+                    {menuOpenId === conv.id && (
+                      <div
+                        ref={menuRef}
+                        className="absolute right-1 top-full mt-1 z-20 w-44 rounded-xl bg-white border border-sand-200 shadow-lg py-1"
+                      >
+                        <button
+                          onClick={() => handleTogglePin(conv)}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-sand-700 hover:bg-sand-50 cursor-pointer"
+                        >
+                          {conv.is_pinned ? (
+                            <>
+                              <PinOff className="w-4 h-4" />
+                              Unpin
+                            </>
+                          ) : (
+                            <>
+                              <Pin className="w-4 h-4" />
+                              Pin to top
+                            </>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => startRename(conv)}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-sand-700 hover:bg-sand-50 cursor-pointer"
+                        >
+                          <Pencil className="w-4 h-4" />
+                          Rename
+                        </button>
+                        <div className="h-px bg-sand-100 my-1" />
+                        <button
+                          onClick={() => handleDelete(conv)}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
